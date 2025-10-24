@@ -1,7 +1,11 @@
 package com.teixeirah.withdrawals.domain.wallet.withdraw;
 
 import com.teixeirah.withdrawals.domain.events.DomainEvent;
+import com.teixeirah.withdrawals.domain.payments.PaymentProviderPort;
+import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
+import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
+import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletWithdrawFailedEvent;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.state.PendingDebitState;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.state.WalletWithdrawState;
 
@@ -25,6 +29,7 @@ public class WalletWithdraw {
 
     private WalletWithdrawStatus status;
     private WalletWithdrawState currentState;
+    private String failureReason;
 
     WalletWithdraw(UUID id, Long userId, BigDecimal amount, Recipient recipient) {
         this.id = id;
@@ -44,7 +49,7 @@ public class WalletWithdraw {
 
     private transient final List<DomainEvent> domainEvents = new ArrayList<>();
 
-    void registerDomainEvent(DomainEvent event) {
+    public void registerDomainEvent(DomainEvent event) {
         this.domainEvents.add(event);
     }
 
@@ -52,6 +57,25 @@ public class WalletWithdraw {
         List<DomainEvent> currentEvents = new ArrayList<>(this.domainEvents);
         this.domainEvents.clear();
         return currentEvents;
+    }
+
+    public void processDebit(WalletServicePort walletServicePort) {
+        this.currentState.processDebit(this, walletServicePort);
+    }
+
+    public void processPayment(PaymentProviderPort paymentProviderPort, PaymentSourceProviderPort paymentSourceProviderPort) {
+        this.currentState.processPayment(this, paymentProviderPort, paymentSourceProviderPort);
+    }
+
+    public void changeState(WalletWithdrawState newState, WalletWithdrawStatus newStatus) {
+        this.currentState = newState;
+        this.status = newStatus;
+    }
+
+    public void markAsFailed(WalletWithdrawState failedState, String reason) {
+        changeState(failedState, WalletWithdrawStatus.FAILED);
+        this.failureReason = reason;
+        registerDomainEvent(new WalletWithdrawFailedEvent(this.getId(), reason));
     }
 
     public UUID getId() {
@@ -80,5 +104,9 @@ public class WalletWithdraw {
 
     public BigDecimal getFee() {
         return this.fee;
+    }
+
+    public BigDecimal getAmountForRecipient() {
+        return this.amount.subtract(this.fee);
     }
 }

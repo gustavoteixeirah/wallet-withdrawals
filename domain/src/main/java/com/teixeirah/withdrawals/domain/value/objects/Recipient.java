@@ -16,5 +16,8 @@ public record Recipient(
         if (nationalId == null || nationalId.isBlank()) {
             throw new IllegalArgumentException("Recipient's national identification is required.");
         }
+        if (account == null) {
+            throw new IllegalArgumentException("Recipient's account is required.");
+        }
     }
 }

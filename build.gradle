@@ -1,0 +1,10 @@
+plugins {
+    id "org.sonarqube" version "7.0.0.6105"
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "gustavoteixeirah_wallet-withdrawals"
+        property "sonar.organization", "devgustavoteixeira"
+    }
+}

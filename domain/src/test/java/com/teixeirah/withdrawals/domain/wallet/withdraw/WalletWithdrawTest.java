@@ -3,6 +3,7 @@ package com.teixeirah.withdrawals.domain.wallet.withdraw;
 import com.teixeirah.withdrawals.domain.events.DomainEvent;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
 import com.teixeirah.withdrawals.domain.value.objects.Account;
+import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletWithdrawCreatedEvent;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

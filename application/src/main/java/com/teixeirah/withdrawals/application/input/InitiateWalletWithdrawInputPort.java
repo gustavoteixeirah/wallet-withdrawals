@@ -1,27 +1,20 @@
 package com.teixeirah.withdrawals.application.input;
 
 import com.teixeirah.withdrawals.application.command.InitiateWalletWithdrawalCommand;
-import com.teixeirah.withdrawals.application.output.WalletWithdrawOutputPort;
 import com.teixeirah.withdrawals.application.response.InitiateWalletWithdrawalResponse;
 import com.teixeirah.withdrawals.application.usecase.InitiateWalletWithdrawalUseCase;
-import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.value.objects.Account;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawOperations;
+import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 
 public class InitiateWalletWithdrawInputPort implements InitiateWalletWithdrawalUseCase {
 
-    private final WalletWithdrawOutputPort walletWithdrawOutputPort;
-    private final DomainEventPublisherPort domainEventPublisher;
-    private final WalletWithdrawOperations walletWithdrawOperations;
+    private final WalletWithdrawRepository walletWithdrawRepository;
 
-    public InitiateWalletWithdrawInputPort(WalletWithdrawOutputPort walletWithdrawOutputPort,
-                                           DomainEventPublisherPort domainEventPublisher,
-                                           WalletWithdrawOperations walletWithdrawOperations) {
-        this.walletWithdrawOutputPort = walletWithdrawOutputPort;
-        this.domainEventPublisher = domainEventPublisher;
-        this.walletWithdrawOperations = walletWithdrawOperations;
+    public InitiateWalletWithdrawInputPort(WalletWithdrawRepository walletWithdrawRepository) {
+        this.walletWithdrawRepository = walletWithdrawRepository;
     }
 
     @Override
@@ -35,11 +28,9 @@ public class InitiateWalletWithdrawInputPort implements InitiateWalletWithdrawal
                 recipientAccount
         );
 
-        final var walletWithdraw = walletWithdrawOperations.create(command.userId(), command.amount(), recipient);
+        final var walletWithdraw = WalletWithdrawOperations.create(command.userId(), command.amount(), recipient);
 
-        walletWithdrawOutputPort.save(walletWithdraw);
-
-        domainEventPublisher.publish(walletWithdraw.pullDomainEvents());
+        walletWithdrawRepository.save(walletWithdraw);
 
         return mapToResponse(walletWithdraw);
     }

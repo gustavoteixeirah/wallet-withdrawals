@@ -3,18 +3,25 @@ package com.teixeirah.withdrawals.application.input;
 import com.teixeirah.withdrawals.application.command.InitiateWalletWithdrawalCommand;
 import com.teixeirah.withdrawals.application.response.InitiateWalletWithdrawalResponse;
 import com.teixeirah.withdrawals.application.usecase.InitiateWalletWithdrawalUseCase;
+import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.value.objects.Account;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawOperations;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 
+import java.util.Objects;
+
 public class InitiateWalletWithdrawInputPort implements InitiateWalletWithdrawalUseCase {
 
     private final WalletWithdrawRepository walletWithdrawRepository;
+    private final DomainEventPublisherPort eventPublisher;
 
-    public InitiateWalletWithdrawInputPort(WalletWithdrawRepository walletWithdrawRepository) {
-        this.walletWithdrawRepository = walletWithdrawRepository;
+    public InitiateWalletWithdrawInputPort(
+            WalletWithdrawRepository walletWithdrawRepository,
+            DomainEventPublisherPort eventPublisher) {
+        this.walletWithdrawRepository = Objects.requireNonNull(walletWithdrawRepository);
+        this.eventPublisher = Objects.requireNonNull(eventPublisher);
     }
 
     @Override
@@ -31,6 +38,8 @@ public class InitiateWalletWithdrawInputPort implements InitiateWalletWithdrawal
         final var walletWithdraw = WalletWithdrawOperations.create(command.userId(), command.amount(), recipient);
 
         walletWithdrawRepository.save(walletWithdraw);
+
+        eventPublisher.publish(walletWithdraw.pullDomainEvents());
 
         return mapToResponse(walletWithdraw);
     }

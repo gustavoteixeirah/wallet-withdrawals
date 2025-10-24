@@ -1,6 +1,7 @@
 package com.teixeirah.withdrawals.application.input;
 
 import com.teixeirah.withdrawals.application.command.ProcessWalletDebitCommand;
+import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.value.objects.Account;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
@@ -27,15 +28,18 @@ class ProcessWalletDebitInputPortTest {
 
     private WalletWithdrawRepository walletWithdrawRepository;
     private WalletServicePort walletServicePort;
+    private DomainEventPublisherPort eventPublisher;
     private ProcessWalletDebitInputPort processWalletDebitInputPort;
 
     @BeforeEach
     void setUp() {
         walletWithdrawRepository = mock(WalletWithdrawRepository.class);
         walletServicePort = mock(WalletServicePort.class);
+        eventPublisher = mock(DomainEventPublisherPort.class);
         processWalletDebitInputPort = new ProcessWalletDebitInputPort(
                 walletWithdrawRepository,
-                walletServicePort
+                walletServicePort,
+                eventPublisher
         );
     }
 
@@ -63,6 +67,7 @@ class ProcessWalletDebitInputPortTest {
         verify(walletServicePort).debit(eq(1L), amountCaptor.capture(), eq(withdrawalId));
         assertEquals(new BigDecimal("110.00"), amountCaptor.getValue());
         verify(walletWithdrawRepository).save(walletWithdraw);
+        verify(eventPublisher).publish(anyList());
     }
 
     @Test
@@ -107,6 +112,7 @@ class ProcessWalletDebitInputPortTest {
         verify(walletServicePort).debit(eq(1L), amountCaptor.capture(), eq(withdrawalId));
         assertEquals(new BigDecimal("110.00"), amountCaptor.getValue());
         verify(walletWithdrawRepository).save(walletWithdraw);
+        verify(eventPublisher).publish(anyList());
 
         // Verify the aggregate state changed to FAILED
         assertEquals(WalletWithdrawStatus.FAILED, walletWithdraw.getStatus());

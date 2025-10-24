@@ -1,6 +1,7 @@
 package com.teixeirah.withdrawals.application.input;
 
 import com.teixeirah.withdrawals.application.command.InitiateWalletWithdrawalCommand;
+import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawStatus;
@@ -15,12 +16,14 @@ import static org.mockito.Mockito.*;
 class InitiateWalletWithdrawInputPortTest {
 
     private WalletWithdrawRepository walletWithdrawRepository;
+    private DomainEventPublisherPort eventPublisher;
     private InitiateWalletWithdrawInputPort handler;
 
     @BeforeEach
     void setUp() {
         walletWithdrawRepository = mock(WalletWithdrawRepository.class);
-        handler = new InitiateWalletWithdrawInputPort(walletWithdrawRepository);
+        eventPublisher = mock(DomainEventPublisherPort.class);
+        handler = new InitiateWalletWithdrawInputPort(walletWithdrawRepository, eventPublisher);
     }
 
     @Test
@@ -46,6 +49,7 @@ class InitiateWalletWithdrawInputPortTest {
         assertNotNull(response.createdAt());
 
         verify(walletWithdrawRepository).save(any(WalletWithdraw.class));
+        verify(eventPublisher).publish(anyList());
     }
 
     @Test

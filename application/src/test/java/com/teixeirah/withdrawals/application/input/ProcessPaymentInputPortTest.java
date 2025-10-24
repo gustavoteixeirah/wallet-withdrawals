@@ -1,6 +1,7 @@
 package com.teixeirah.withdrawals.application.input;
 
 import com.teixeirah.withdrawals.application.command.ProcessPaymentCommand;
+import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentProviderPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
 import com.teixeirah.withdrawals.domain.payments.exceptions.PaymentProviderException;
@@ -27,6 +28,7 @@ class ProcessPaymentInputPortTest {
     private WalletWithdrawRepository walletWithdrawRepository;
     private PaymentProviderPort paymentProviderPort;
     private PaymentSourceProviderPort paymentSourceProviderPort;
+    private DomainEventPublisherPort eventPublisher;
     private ProcessPaymentInputPort processPaymentInputPort;
 
     @BeforeEach
@@ -34,10 +36,12 @@ class ProcessPaymentInputPortTest {
         walletWithdrawRepository = mock(WalletWithdrawRepository.class);
         paymentProviderPort = mock(PaymentProviderPort.class);
         paymentSourceProviderPort = mock(PaymentSourceProviderPort.class);
+        eventPublisher = mock(DomainEventPublisherPort.class);
         processPaymentInputPort = new ProcessPaymentInputPort(
                 walletWithdrawRepository,
                 paymentProviderPort,
-                paymentSourceProviderPort
+                paymentSourceProviderPort,
+                eventPublisher
         );
     }
 
@@ -66,6 +70,7 @@ class ProcessPaymentInputPortTest {
         verify(walletWithdraw).processPayment(any(), any());
         verify(paymentProviderPort).createPayment(any());
         verify(walletWithdrawRepository).save(walletWithdraw);
+        verify(eventPublisher).publish(anyList());
     }
 
     @Test
@@ -110,6 +115,7 @@ class ProcessPaymentInputPortTest {
         verify(walletWithdraw).processPayment(any(), any());
         verify(paymentProviderPort).createPayment(any());
         verify(walletWithdrawRepository).save(walletWithdraw);
+        verify(eventPublisher).publish(anyList());
 
         // Verify the aggregate state changed to FAILED
         assertEquals(WalletWithdrawStatus.FAILED, walletWithdraw.getStatus());
@@ -140,6 +146,7 @@ class ProcessPaymentInputPortTest {
         verify(walletWithdraw).processPayment(any(), any());
         verify(paymentProviderPort).createPayment(any());
         verify(walletWithdrawRepository).save(walletWithdraw);
+        verify(eventPublisher).publish(anyList());
 
         // Verify the aggregate state changed to FAILED
         assertEquals(WalletWithdrawStatus.FAILED, walletWithdraw.getStatus());

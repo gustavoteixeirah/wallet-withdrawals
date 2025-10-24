@@ -127,4 +127,21 @@ class PendingDebitStateTest {
         // Should not change state for unhandled exceptions
         assertEquals(WalletWithdrawStatus.CREATED, walletWithdraw.getStatus());
     }
+
+    @Test
+    void shouldClearEventsAfterPublishingOnDebitSuccess() throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
+        // Given
+        when(walletServicePort.debit(eq(1L), eq(new BigDecimal("110.00")), any())).thenReturn(123L);
+
+        // When
+        pendingDebitState.processDebit(walletWithdraw, walletServicePort);
+
+        // Then
+        var firstBatch = walletWithdraw.pullDomainEvents();
+        // Created + WalletDebited events
+        assertEquals(2, firstBatch.size());
+
+        var secondBatch = walletWithdraw.pullDomainEvents();
+        assertTrue(secondBatch.isEmpty());
+    }
 }

@@ -173,4 +173,27 @@ class WalletDebitedStateTest {
         // Should not change state for unhandled exceptions
         assertEquals(WalletWithdrawStatus.WALLET_DEBITED, walletWithdraw.getStatus());
     }
+
+    @Test
+    void shouldClearEventsAfterPublishingOnPaymentSuccess() throws PaymentRejectedException, PaymentProviderException {
+        // Given
+        PaymentSource expectedSource = new PaymentSource(
+                "COMPANY",
+                new PaymentSourceInformation("ONTOP INC"),
+                new PaymentAccount("0245253419", "USD", "028444018")
+        );
+        when(paymentSourceProviderPort.getPaymentSource()).thenReturn(expectedSource);
+        when(paymentProviderPort.createPayment(any())).thenReturn("receipt123");
+
+        // When
+        walletDebitedState.processPayment(walletWithdraw, paymentProviderPort, paymentSourceProviderPort);
+
+        // Then
+        var firstBatch = walletWithdraw.pullDomainEvents();
+        // Created + WithdrawalCompleted events
+        assertEquals(2, firstBatch.size());
+
+        var secondBatch = walletWithdraw.pullDomainEvents();
+        assertTrue(secondBatch.isEmpty());
+    }
 }

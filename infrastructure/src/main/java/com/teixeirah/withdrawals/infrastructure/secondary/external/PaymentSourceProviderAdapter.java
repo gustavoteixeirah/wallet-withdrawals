@@ -4,41 +4,40 @@ import com.teixeirah.withdrawals.domain.payments.PaymentAccount;
 import com.teixeirah.withdrawals.domain.payments.PaymentSource;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceInformation;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
+import com.teixeirah.withdrawals.infrastructure.config.PaymentSourceProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@EnableConfigurationProperties(PaymentSourceProperties.class)
 public class PaymentSourceProviderAdapter implements PaymentSourceProviderPort {
 
-    private final PaymentSource paymentSource;
+    private final PaymentSourceProperties paymentSourceProperties;
 
-    public PaymentSourceProviderAdapter(PaymentSourceProperties properties) {
-        log.info("Initializing PaymentSource from configuration...");
-
-        var account = new PaymentAccount(
-                properties.account().accountNumber(),
-                properties.account().currency(),
-                properties.account().routingNumber()
-        );
-
-        var info = new PaymentSourceInformation(
-                properties.sourceInformation().name()
-        );
-
-        this.paymentSource = new PaymentSource(
-                properties.type(),
-                info,
-                account
-        );
-
-        log.info("PaymentSource initialized successfully.");
+    public PaymentSourceProviderAdapter(PaymentSourceProperties paymentSourceProperties) {
+        this.paymentSourceProperties = paymentSourceProperties;
     }
 
     @Override
     public PaymentSource getPaymentSource() {
-        return this.paymentSource;
+        log.atInfo()
+           .addKeyValue("operation", "getPaymentSource")
+           .log("payment_source_retrieval_started");
+
+        PaymentSource source = new PaymentSource(
+                paymentSourceProperties.getType(),
+                new PaymentSourceInformation(paymentSourceProperties.getName()),
+                new PaymentAccount(
+                        paymentSourceProperties.getAccountNumber(),
+                        paymentSourceProperties.getCurrency(),
+                        paymentSourceProperties.getRoutingNumber()
+                )
+        );
+
+        log.atInfo()
+           .addKeyValue("type", paymentSourceProperties.getType())
+           .addKeyValue("name", paymentSourceProperties.getName())
+           .log("payment_source_retrieved");
+        return source;
     }
 }

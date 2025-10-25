@@ -20,26 +20,28 @@ class DomainEventPublisherAdapter implements DomainEventPublisherPort {
 
     @Override
     public void publish(List<DomainEvent> events) {
-        log.info("Publishing {} domain events", events.size());
+        log.atInfo()
+           .addKeyValue("eventsCount", events.size())
+           .log("publishing_domain_events_registered_after_commit");
 
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            // If there's an active transaction, publish events after commit
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    publishEvents(events);
-                }
-            });
-        } else {
-            publishEvents(events);
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                publishEvents(events);
+            }
+        });
+
     }
 
     private void publishEvents(List<DomainEvent> events) {
         for (DomainEvent event : events) {
-            log.info("Publishing event: {}", event);
+            log.atInfo()
+               .addKeyValue("eventType", event.getClass().getName())
+               .log("publishing_domain_event");
             applicationEventPublisher.publishEvent(event);
         }
-        log.info("All domain events published successfully");
+        log.atInfo()
+           .addKeyValue("eventsCount", events.size())
+           .log("domain_events_published");
     }
 }

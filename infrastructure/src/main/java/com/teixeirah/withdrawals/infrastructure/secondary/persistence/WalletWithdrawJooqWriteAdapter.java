@@ -20,7 +20,10 @@ class WalletWithdrawJooqWriteAdapter {
     }
 
     public void save(WalletWithdraw walletWithdraw) {
-        log.info("Saving wallet withdraw: id={}, status={}", walletWithdraw.getId(), walletWithdraw.getStatus());
+        log.atInfo()
+           .addKeyValue("id", walletWithdraw.getId())
+           .addKeyValue("status", walletWithdraw.getStatus())
+           .log("wallet_withdraw_save_started");
 
         writeDsl.insertInto(WALLET_WITHDRAWALS_)
                 .set(WALLET_WITHDRAWALS_.ID, walletWithdraw.getId())
@@ -44,6 +47,8 @@ class WalletWithdrawJooqWriteAdapter {
                 .set(WALLET_WITHDRAWALS_.PAYMENT_PROVIDER_ID_REF, walletWithdraw.getPaymentProviderIdRef())
                 .execute();
 
-        log.info("Wallet withdraw saved successfully");
+        log.atInfo()
+           .addKeyValue("id", walletWithdraw.getId())
+           .log("wallet_withdraw_saved");
     }
 }

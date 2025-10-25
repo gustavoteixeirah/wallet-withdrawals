@@ -21,17 +21,24 @@ public class WalletWithdrawFailedEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WalletWithdrawFailedEvent.class)
     public void handle(WalletWithdrawFailedEvent event) {
-        log.info("Received WalletWithdrawFailedEvent for withdrawal: {} with reason: {}", event.withdrawalId(), event.reason());
+        log.atInfo()
+           .addKeyValue("withdrawalId", event.withdrawalId())
+           .addKeyValue("reason", event.reason())
+           .log("wallet_withdraw_failed_event_received");
 
         WalletWithdraw walletWithdraw = walletWithdrawRepository.findById(event.withdrawalId());
 
         if (walletWithdraw.getStatus() == WalletWithdrawStatus.WALLET_DEBITED) {
-            log.warn("Withdrawal {} failed after wallet debit. Triggering compensation.", event.withdrawalId());
+            log.atWarn()
+               .addKeyValue("withdrawalId", event.withdrawalId())
+               .log("withdrawal_failed_after_wallet_debit_compensation_triggered");
             performCompensation(walletWithdraw);
         }
 
         // TODO: Send failure notifications (email, SMS, etc.)
-        log.info("Failure notification sent for withdrawal: {}", event.withdrawalId());
+        log.atInfo()
+           .addKeyValue("withdrawalId", event.withdrawalId())
+           .log("withdrawal_failure_notification_sent");
 
     }
 
@@ -40,16 +47,23 @@ public class WalletWithdrawFailedEventListener {
             // Calculate the amount to refund (original amount + fee)
             var refundAmount = walletWithdraw.getAmount().add(walletWithdraw.getFee());
 
-            log.info("Initiating wallet refund for withdrawal {}: amount={}",
-                    walletWithdraw.getId(), refundAmount);
+            log.atInfo()
+               .addKeyValue("withdrawalId", walletWithdraw.getId())
+               .addKeyValue("refundAmount", refundAmount)
+               .log("wallet_refund_initiated");
 
             // TODO: Implement actual refund logic using WalletServicePort
             // This would typically call walletService.topUp(walletWithdraw.getUserId(), refundAmount, walletWithdraw.getId())
 
-            log.info("Wallet refund completed for withdrawal: {}", walletWithdraw.getId());
+            log.atInfo()
+               .addKeyValue("withdrawalId", walletWithdraw.getId())
+               .log("wallet_refund_completed");
 
         } catch (Exception e) {
-            log.error("Failed to perform compensation for withdrawal: {}", walletWithdraw.getId(), e);
+            log.atError()
+               .addKeyValue("withdrawalId", walletWithdraw.getId())
+               .setCause(e)
+               .log("wallet_refund_compensation_failed");
             // TODO: Consider additional error handling like manual intervention alerts
         }
     }

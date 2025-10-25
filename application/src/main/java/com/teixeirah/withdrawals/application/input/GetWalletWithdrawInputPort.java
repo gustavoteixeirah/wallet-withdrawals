@@ -7,6 +7,8 @@ import com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUs
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 @TransactionalUseCase
@@ -24,13 +26,17 @@ public class GetWalletWithdrawInputPort implements GetWalletWithdrawUseCase {
         return mapToResponse(walletWithdraw);
     }
 
+    private static BigDecimal toCurrency(BigDecimal value) {
+        return value == null ? null : value.setScale(2, RoundingMode.HALF_UP);
+    }
+
     private WalletWithdrawResponse mapToResponse(WalletWithdraw walletWithdraw) {
         return new WalletWithdrawResponse(
                 walletWithdraw.getId(),
                 walletWithdraw.getUserId(),
-                walletWithdraw.getAmount(),
-                walletWithdraw.getFee(),
-                walletWithdraw.getAmountForRecipient(),
+                toCurrency(walletWithdraw.getAmount()),
+                toCurrency(walletWithdraw.getFee()),
+                toCurrency(walletWithdraw.getAmountForRecipient()),
                 walletWithdraw.getStatus(),
                 walletWithdraw.getCreatedAt(),
                 walletWithdraw.getFailureReason(),

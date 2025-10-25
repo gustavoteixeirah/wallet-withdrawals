@@ -27,7 +27,12 @@ class WalletWithdrawHttpAdapter {
     ResponseEntity<InitiateWalletWithdrawalResponse> initiateWalletWithdraw(
             @RequestBody InitiateWalletWithdrawRequest request) {
 
-        log.info("Received wallet withdraw request: {}", request);
+        // Structured log for incoming request (avoid logging full request object)
+        log.atInfo()
+           .addKeyValue("path", "/api/v1/wallet_withdraw")
+           .addKeyValue("userId", request.userId())
+           .addKeyValue("amount", request.amount())
+           .log("received_wallet_withdraw_request");
 
         InitiateWalletWithdrawalCommand command = new InitiateWalletWithdrawalCommand(
                 request.userId(),
@@ -41,19 +46,26 @@ class WalletWithdrawHttpAdapter {
 
         InitiateWalletWithdrawalResponse response = initiateWalletWithdrawUseCase.execute(command);
 
-        log.info("Wallet withdraw initiated successfully: {}", response.transactionId());
+        log.atInfo()
+           .addKeyValue("transactionId", response.transactionId())
+           .log("wallet_withdraw_initiated");
 
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/wallet_withdraw/{id}")
     ResponseEntity<WalletWithdrawResponse> getWalletWithdraw(@PathVariable UUID id) {
-        log.info("Received get wallet withdraw request for id: {}", id);
+        log.atInfo()
+           .addKeyValue("path", "/api/v1/wallet_withdraw/{id}")
+           .addKeyValue("id", id)
+           .log("get_wallet_withdraw_request");
 
         GetWalletWithdrawCommand command = new GetWalletWithdrawCommand(id);
         WalletWithdrawResponse response = getWalletWithdrawUseCase.execute(command);
 
-        log.info("Wallet withdraw retrieved successfully: {}", response.id());
+        log.atInfo()
+           .addKeyValue("id", response.id())
+           .log("wallet_withdraw_retrieved");
         return ResponseEntity.ok(response);
 
     }

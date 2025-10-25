@@ -4,7 +4,8 @@ import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.InsufficientFundsException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletServiceException;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,36 +13,42 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate; // Import RestTemplate
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-@Slf4j
 @Component
 public class WalletServiceAdapter implements WalletServicePort {
+
+    private static final Logger log = LoggerFactory.getLogger(WalletServiceAdapter.class);
 
     private final RestTemplate restTemplate;
     private final String walletServiceUrl;
 
-    // --- DTOs ---
-    private record WalletTransactionRequest(BigDecimal amount, long user_id) {}
-    private record WalletTransactionResponse(long wallet_transaction_id, BigDecimal amount, long user_id) {}
-    // We might need an error DTO if the API returns structured errors, but let's keep it simple for now.
+    private record WalletTransactionRequest(BigDecimal amount, long user_id) {
+    }
+
+    private record WalletTransactionResponse(long wallet_transaction_id, BigDecimal amount, long user_id) {
+    }
 
     public WalletServiceAdapter(
-            RestTemplate restTemplate, // Inject RestTemplate
+            RestTemplate restTemplate,
             @Value("${adapters.wallet-service.base-url}") String baseUrl
     ) {
         this.restTemplate = restTemplate;
-        this.walletServiceUrl = baseUrl + "/wallets/transactions"; // Construct full URL
+        this.walletServiceUrl = baseUrl + "/wallets/transactions";
     }
 
     @Override
     public Long debit(Long userId, BigDecimal amount, UUID transactionId)
             throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
 
-        log.info("Attempting debit via RestTemplate: userId={}, amount={}, transactionId={}", userId, amount, transactionId);
+        log.atInfo()
+           .addKeyValue("userId", userId)
+           .addKeyValue("amount", amount)
+           .addKeyValue("transactionId", transactionId)
+           .log("wallet_service_debit_attempt");
         var requestPayload = new WalletTransactionRequest(amount.negate(), userId);
 
         HttpHeaders headers = new HttpHeaders();
@@ -55,27 +62,42 @@ public class WalletServiceAdapter implements WalletServicePort {
                     WalletTransactionResponse.class);
 
             if (response == null) {
-                log.error("Received null response from wallet service for debit userId={}", userId);
+                log.atError()
+                   .addKeyValue("userId", userId)
+                   .log("wallet_service_null_response");
                 throw new WalletServiceException("Wallet service returned an empty response.");
             }
 
-            log.info("RestTemplate debit call successful. Response ID: {}", response.wallet_transaction_id());
+            log.atInfo()
+               .addKeyValue("walletTransactionId", response.wallet_transaction_id())
+               .log("wallet_service_debit_success");
             return response.wallet_transaction_id();
 
         } catch (HttpClientErrorException e) {
-            log.error("Wallet Service 4xx Error: Status {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            log.atError()
+               .addKeyValue("statusCode", e.getStatusCode())
+               .addKeyValue("responseBody", e.getResponseBodyAsString())
+               .setCause(e)
+               .log("wallet_service_4xx_error");
             if (e.getStatusCode().value() == 404) {
                 throw new WalletNotFoundException("Wallet not found: " + e.getResponseBodyAsString());
             }
-            if (e.getStatusCode().value() == 409) { // Example for conflict/insufficient funds
+            if (e.getStatusCode().value() == 409) {
                 throw new InsufficientFundsException("Insufficient funds: " + e.getResponseBodyAsString());
             }
             throw new WalletServiceException("Client error calling wallet service: " + e.getMessage());
         } catch (HttpServerErrorException e) {
-            log.error("Wallet Service 5xx Error: Status {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            log.atError()
+               .addKeyValue("statusCode", e.getStatusCode())
+               .addKeyValue("responseBody", e.getResponseBodyAsString())
+               .setCause(e)
+               .log("wallet_service_5xx_error");
             throw new WalletServiceException("Server error from wallet service: " + e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error during RestTemplate debit call: {}", e.getMessage(), e);
+            log.atError()
+               .addKeyValue("errorMessage", e.getMessage())
+               .setCause(e)
+               .log("wallet_service_debit_unexpected_error");
             throw new WalletServiceException("Unexpected error communicating with wallet service: " + e.getMessage());
         }
     }

@@ -20,11 +20,15 @@ public class WalletWithdrawCreatedEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WalletWithdrawCreatedEvent.class)
     public void handle(WalletWithdrawCreatedEvent event) {
-        log.info("Received WalletWithdrawCreatedEvent for withdrawal: {}", event.walletWithdraw().getId());
+        log.atInfo()
+           .addKeyValue("withdrawalId", event.walletWithdraw().getId())
+           .log("wallet_withdraw_created_event_received");
 
         ProcessWalletDebitCommand command = new ProcessWalletDebitCommand(event.walletWithdraw().getId());
         processWalletDebitInputPort.execute(command);
 
-        log.info("Successfully initiated wallet debit for withdrawal: {}", event.walletWithdraw().getId());
+        log.atInfo()
+           .addKeyValue("withdrawalId", event.walletWithdraw().getId())
+           .log("wallet_debit_initiated");
     }
 }

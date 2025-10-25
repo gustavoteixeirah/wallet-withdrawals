@@ -16,14 +16,6 @@ spring:
     enabled: ${FLYWAY_ENABLED:true}
     validate-migration-naming: true
 
-# Logging
-logging:
-  level:
-    com.teixeirah.withdrawals: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] - %msg%n"
-
-
 adapters:
   wallet-service:
     base-url: "http://mockoon.tools.getontop.com:3000"

@@ -20,12 +20,11 @@ configurations {
 
 ext {
     jooqVersion = '3.20.6'
-    resilience4jVersion = '2.2.0' // Make sure this is only defined once
     testcontainersVersion = "1.19.8"
     restAssuredVersion = "5.5.0"
     awaitilityVersion = "4.2.1"
-    wiremockVersion = "3.9.1" // Add wiremock version
-    wiremockTestcontainersModuleVersion = "1.0-alpha-13" // Add wiremock TC module version
+    wiremockVersion = "3.9.1"
+    wiremockTestcontainersModuleVersion = "1.0-alpha-13"
 }
 
 repositories {
@@ -42,12 +41,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.springframework.boot:spring-boot-starter-jooq'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux' // For WebClient
-    implementation 'org.springframework.boot:spring-boot-starter-actuator' // Good practice
-
-    // Resilience4j
-    implementation "io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}"
-    implementation "io.github.resilience4j:resilience4j-reactor:${resilience4jVersion}"
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // jOOQ & Database
     implementation "org.jooq:jooq:${jooqVersion}"
@@ -62,35 +56,19 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
-    // --- Testing (Unit & Integration) ---
+    // --- Testing  ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-testcontainers' // Manages ServiceConnection
-
-    // --- Testcontainers ---
-    testImplementation platform("org.testcontainers:testcontainers-bom:${testcontainersVersion}") // BOM
-    testImplementation 'org.testcontainers:testcontainers'          // Core library
-    testImplementation 'org.testcontainers:junit-jupiter'           // JUnit 5 support
-    testImplementation 'org.testcontainers:postgresql'            // PostgreSQL container
-
-    // --- WireMock Dependencies (Corrected) ---
-    // Testcontainers module for WireMock
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation platform("org.testcontainers:testcontainers-bom:${testcontainersVersion}")
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
     testImplementation "org.wiremock.integrations.testcontainers:wiremock-testcontainers-module:${wiremockTestcontainersModuleVersion}"
-    // Main WireMock library (needed for stubbing API: WireMock.aResponse(), etc.)
     testImplementation "org.wiremock:wiremock:${wiremockVersion}"
-
-
-    // --- HTTP & Async Test Utilities ---
-    testImplementation "io.rest-assured:rest-assured:${restAssuredVersion}"       // For HTTP API testing
-    testImplementation "org.awaitility:awaitility:${awaitilityVersion}"          // For async testing (Sagas)
-}
-
-
-dependencyManagement {
-    imports {
-        // Manage Resilience4j versions centrally
-        mavenBom "io.github.resilience4j:resilience4j-bom:${resilience4jVersion}"
-    }
+    testImplementation "io.rest-assured:rest-assured:${restAssuredVersion}"
+    testImplementation "org.awaitility:awaitility:${awaitilityVersion}"
 }
 
 test {

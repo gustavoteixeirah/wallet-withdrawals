@@ -2,7 +2,6 @@ package com.teixeirah.withdrawals.infrastructure.secondary.persistence;
 
 import com.teixeirah.withdrawals.domain.value.objects.Account;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
-import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawStatus;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.exceptions.WalletWithdrawNotFoundException;
@@ -26,14 +25,18 @@ public class WalletWithdrawJooqReadAdapter {
     }
 
     public WalletWithdraw findById(UUID id) {
-        log.info("Finding wallet withdraw by id: {}", id);
+        log.atInfo()
+           .addKeyValue("id", id)
+           .log("wallet_withdraw_find_by_id_started");
 
         var record = dsl.selectFrom(WALLET_WITHDRAWALS_)
                 .where(WALLET_WITHDRAWALS_.ID.eq(id))
                 .fetchOne();
 
         if (record == null) {
-            log.warn("Wallet withdraw not found: {}", id);
+            log.atWarn()
+               .addKeyValue("id", id)
+               .log("wallet_withdraw_not_found");
             throw new WalletWithdrawNotFoundException("Wallet withdraw not found: " + id);
         }
 
@@ -46,10 +49,12 @@ public class WalletWithdrawJooqReadAdapter {
 
         WalletWithdrawStatus status = WalletWithdrawStatus.valueOf(record.getStatus());
 
-        // Reconstruct the WalletWithdraw
         var walletWithdraw = WalletWithdraw.reconstruct(id, record.getUserId(), record.getAmount(), recipient, status, record.getCreatedAt().toInstant(), record.getFailureReason(), record.getWalletTransactionIdRef(), record.getPaymentProviderIdRef());
 
-        log.info("Wallet withdraw found: {}", walletWithdraw.getId());
+        log.atInfo()
+           .addKeyValue("id", walletWithdraw.getId())
+           .addKeyValue("status", walletWithdraw.getStatus())
+           .log("wallet_withdraw_found");
         return walletWithdraw;
     }
 }

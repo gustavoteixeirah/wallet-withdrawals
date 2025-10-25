@@ -8,6 +8,7 @@ import org.jooq.conf.Settings;
 import org.jooq.impl.DataSourceConnectionProvider;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultDSLContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -23,37 +24,11 @@ import javax.sql.DataSource;
 @EnableTransactionManagement
 public class DataSourceConfig {
 
-    @Bean
-    @Primary
-    public DataSource writeDataSource(
-            @Value("${spring.datasource.write.url}") String url,
-            @Value("${spring.datasource.write.username}") String username,
-            @Value("${spring.datasource.write.password}") String password,
-            @Value("${spring.datasource.write.driver-class-name}") String driverClassName) {
-        return DataSourceBuilder.create()
-                .url(url)
-                .username(username)
-                .password(password)
-                .driverClassName(driverClassName)
-                .build();
-    }
+    @Autowired
+    private DataSource dataSource;
 
     @Bean
-    public DataSource readDataSource(
-            @Value("${spring.datasource.read.url}") String url,
-            @Value("${spring.datasource.read.username}") String username,
-            @Value("${spring.datasource.read.password}") String password,
-            @Value("${spring.datasource.read.driver-class-name}") String driverClassName) {
-        return DataSourceBuilder.create()
-                .url(url)
-                .username(username)
-                .password(password)
-                .driverClassName(driverClassName)
-                .build();
-    }
-
-    @Bean
-    public DSLContext writeDsl(@Qualifier("writeDataSource") DataSource dataSource) {
+    public DSLContext writeDsl(DataSource dataSource) {
         Settings settings = new Settings()
                 .withRenderNameCase(RenderNameCase.LOWER)
                 .withRenderQuotedNames(RenderQuotedNames.NEVER);
@@ -64,7 +39,7 @@ public class DataSourceConfig {
     }
 
     @Bean
-    public DSLContext readDsl(@Qualifier("readDataSource") DataSource dataSource) {
+    public DSLContext readDsl(DataSource dataSource) {
         Settings settings = new Settings()
                 .withRenderNameCase(RenderNameCase.LOWER)
                 .withRenderQuotedNames(RenderQuotedNames.NEVER)

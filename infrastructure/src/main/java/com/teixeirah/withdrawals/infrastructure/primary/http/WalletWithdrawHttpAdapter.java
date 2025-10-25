@@ -2,12 +2,12 @@ package com.teixeirah.withdrawals.infrastructure.primary.http;
 
 import com.teixeirah.withdrawals.application.command.GetWalletWithdrawCommand;
 import com.teixeirah.withdrawals.application.command.InitiateWalletWithdrawalCommand;
-import com.teixeirah.withdrawals.application.input.GetWalletWithdrawInputPort;
-import com.teixeirah.withdrawals.application.input.InitiateWalletWithdrawInputPort;
 import com.teixeirah.withdrawals.application.response.InitiateWalletWithdrawalResponse;
 import com.teixeirah.withdrawals.application.response.WalletWithdrawResponse;
 import com.teixeirah.withdrawals.application.usecase.GetWalletWithdrawUseCase;
+import com.teixeirah.withdrawals.application.usecase.InitiateWalletWithdrawalUseCase;
 import com.teixeirah.withdrawals.application.usecase.UseCase;
+import com.teixeirah.withdrawals.domain.wallet.withdraw.exceptions.WalletWithdrawNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 class WalletWithdrawHttpAdapter {
 
-    private final UseCase<InitiateWalletWithdrawalCommand, InitiateWalletWithdrawalResponse> initiateWalletWithdrawUseCase;
+    private final InitiateWalletWithdrawalUseCase initiateWalletWithdrawUseCase;
     private final GetWalletWithdrawUseCase getWalletWithdrawUseCase;
 
     @PostMapping("/wallet_withdraw")
@@ -50,15 +50,14 @@ class WalletWithdrawHttpAdapter {
 
     @GetMapping("/wallet_withdraw/{id}")
     ResponseEntity<WalletWithdrawResponse> getWalletWithdraw(@PathVariable UUID id) {
-
         log.info("Received get wallet withdraw request for id: {}", id);
 
         GetWalletWithdrawCommand command = new GetWalletWithdrawCommand(id);
         WalletWithdrawResponse response = getWalletWithdrawUseCase.execute(command);
 
         log.info("Wallet withdraw retrieved successfully: {}", response.id());
-
         return ResponseEntity.ok(response);
+
     }
 
     record InitiateWalletWithdrawRequest(

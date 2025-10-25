@@ -2,8 +2,10 @@ package com.teixeirah.withdrawals.infrastructure.secondary.persistence;
 
 import com.teixeirah.withdrawals.domain.value.objects.Account;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
+import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawStatus;
+import com.teixeirah.withdrawals.domain.wallet.withdraw.exceptions.WalletWithdrawNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,7 +34,7 @@ public class WalletWithdrawJooqReadAdapter {
 
         if (record == null) {
             log.warn("Wallet withdraw not found: {}", id);
-            throw new RuntimeException("Wallet withdraw not found: " + id);
+            throw new WalletWithdrawNotFoundException("Wallet withdraw not found: " + id);
         }
 
         var recipient = new Recipient(

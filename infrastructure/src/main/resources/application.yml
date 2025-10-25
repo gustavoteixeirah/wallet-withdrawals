@@ -5,16 +5,11 @@ spring:
     virtual:
       enabled: true
   datasource:
-    write:
-      url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:walletwithdrawals}
-      username: ${DB_USERNAME:walletwithdrawals}
-      password: ${DB_PASSWORD:walletwithdrawals}
-      driver-class-name: org.postgresql.Driver
-    read:
-      url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:walletwithdrawals}
-      username: ${DB_USERNAME:walletwithdrawals}
-      password: ${DB_PASSWORD:walletwithdrawals}
-      driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:walletwithdrawals}
+    username: ${DB_USERNAME:walletwithdrawals}
+    password: ${DB_PASSWORD:walletwithdrawals}
+    driver-class-name: org.postgresql.Driver
+
   jooq:
     sql-dialect: postgres
   flyway:

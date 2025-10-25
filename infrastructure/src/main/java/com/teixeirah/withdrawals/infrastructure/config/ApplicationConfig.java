@@ -1,15 +1,9 @@
 package com.teixeirah.withdrawals.infrastructure.config;
 
-import com.teixeirah.withdrawals.application.command.GetWalletWithdrawCommand;
-import com.teixeirah.withdrawals.application.command.InitiateWalletWithdrawalCommand;
-import com.teixeirah.withdrawals.application.command.ProcessPaymentCommand;
-import com.teixeirah.withdrawals.application.command.ProcessWalletDebitCommand;
 import com.teixeirah.withdrawals.application.input.GetWalletWithdrawInputPort;
 import com.teixeirah.withdrawals.application.input.InitiateWalletWithdrawInputPort;
 import com.teixeirah.withdrawals.application.input.ProcessPaymentInputPort;
 import com.teixeirah.withdrawals.application.input.ProcessWalletDebitInputPort;
-import com.teixeirah.withdrawals.application.response.InitiateWalletWithdrawalResponse;
-import com.teixeirah.withdrawals.application.response.WalletWithdrawResponse;
 import com.teixeirah.withdrawals.application.usecase.*;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentProviderPort;
@@ -29,14 +23,14 @@ public class ApplicationConfig {
         return new TransactionalUseCaseWrapper(transactionManager);
     }
 
-        @Bean
+    @Bean
     public InitiateWalletWithdrawalUseCase initiateWalletWithdrawInputPort(
             WalletWithdrawRepository walletWithdrawRepository,
             DomainEventPublisherPort eventPublisher,
             TransactionalUseCaseWrapper transactionalWrapper) {
 
         InitiateWalletWithdrawalUseCase useCase =
-            new InitiateWalletWithdrawInputPort(walletWithdrawRepository, eventPublisher);
+                new InitiateWalletWithdrawInputPort(walletWithdrawRepository, eventPublisher);
 
         useCase = transactionalWrapper.wrap(useCase, new WrapperContext());
 
@@ -48,7 +42,7 @@ public class ApplicationConfig {
             WalletWithdrawRepository walletWithdrawRepository,
             TransactionalUseCaseWrapper transactionalWrapper) {
         GetWalletWithdrawUseCase useCase =
-            new GetWalletWithdrawInputPort(walletWithdrawRepository);
+                new GetWalletWithdrawInputPort(walletWithdrawRepository);
 
         useCase = transactionalWrapper.wrap(useCase, new WrapperContext());
 
@@ -62,7 +56,7 @@ public class ApplicationConfig {
             DomainEventPublisherPort eventPublisher,
             TransactionalUseCaseWrapper transactionalWrapper) {
         ProcessWalletDebitUseCase useCase =
-            new ProcessWalletDebitInputPort(walletWithdrawRepository, walletServicePort, eventPublisher);
+                new ProcessWalletDebitInputPort(walletWithdrawRepository, walletServicePort, eventPublisher);
 
         useCase = transactionalWrapper.wrap(useCase, new WrapperContext());
 
@@ -77,7 +71,7 @@ public class ApplicationConfig {
             DomainEventPublisherPort eventPublisher,
             TransactionalUseCaseWrapper transactionalWrapper) {
         ProcessPaymentUseCase useCase =
-            new ProcessPaymentInputPort(walletWithdrawRepository, paymentProviderPort, paymentSourceProviderPort, eventPublisher);
+                new ProcessPaymentInputPort(walletWithdrawRepository, paymentProviderPort, paymentSourceProviderPort, eventPublisher);
 
         useCase = transactionalWrapper.wrap(useCase, new WrapperContext());
 

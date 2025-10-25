@@ -1,34 +1,35 @@
 package com.teixeirah.withdrawals.infrastructure.primary.listeners;
 
 import com.teixeirah.withdrawals.application.command.ProcessWalletDebitCommand;
-import com.teixeirah.withdrawals.application.input.ProcessWalletDebitInputPort;
+import com.teixeirah.withdrawals.application.usecase.ProcessWalletDebitUseCase;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletWithdrawCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class WalletWithdrawCreatedEventListener {
 
-    private final ProcessWalletDebitInputPort processWalletDebitInputPort;
+    private final ProcessWalletDebitUseCase processWalletDebitInputPort;
 
     @Async
-    @EventListener(classes = WalletWithdrawCreatedEvent.class)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WalletWithdrawCreatedEvent.class)
     public void handle(WalletWithdrawCreatedEvent event) {
         log.info("Received WalletWithdrawCreatedEvent for withdrawal: {}", event.walletWithdraw().getId());
 
-        try {
-            ProcessWalletDebitCommand command = new ProcessWalletDebitCommand(event.walletWithdraw().getId());
-            processWalletDebitInputPort.execute(command);
-
-            log.info("Successfully initiated wallet debit for withdrawal: {}", event.walletWithdraw().getId());
-        } catch (Exception e) {
-            log.error("Failed to process wallet debit for withdrawal: {}", event.walletWithdraw().getId(), e);
-            // Note: The domain layer will handle failures and publish failure events
+        if (Math.random() < 0.5) {
+            log.error("Simulating transient failure for withdrawal: {}", event.walletWithdraw().getId());
+            throw new RuntimeException();
         }
+
+        ProcessWalletDebitCommand command = new ProcessWalletDebitCommand(event.walletWithdraw().getId());
+        processWalletDebitInputPort.execute(command);
+
+        log.info("Successfully initiated wallet debit for withdrawal: {}", event.walletWithdraw().getId());
     }
 }

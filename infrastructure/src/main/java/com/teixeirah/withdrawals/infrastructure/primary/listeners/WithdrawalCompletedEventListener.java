@@ -5,13 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
 public class WithdrawalCompletedEventListener {
 
     @Async
-    @EventListener(classes = WithdrawalCompletedEvent.class)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WithdrawalCompletedEvent.class)
     public void handle(WithdrawalCompletedEvent event) {
         log.info("Received WithdrawalCompletedEvent for withdrawal: {}", event.withdrawalId());
 

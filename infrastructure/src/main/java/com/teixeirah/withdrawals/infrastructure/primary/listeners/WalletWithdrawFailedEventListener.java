@@ -6,9 +6,10 @@ import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawStatus;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletWithdrawFailedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
@@ -18,25 +19,25 @@ public class WalletWithdrawFailedEventListener {
     private final WalletWithdrawRepository walletWithdrawRepository;
 
     @Async
-    @EventListener(classes = WalletWithdrawFailedEvent.class)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WalletWithdrawFailedEvent.class)
     public void handle(WalletWithdrawFailedEvent event) {
         log.info("Received WalletWithdrawFailedEvent for withdrawal: {} with reason: {}", event.withdrawalId(), event.reason());
 
-        try {
-            // Check if compensation is needed
-            WalletWithdraw walletWithdraw = walletWithdrawRepository.findById(event.withdrawalId());
-
-            if (walletWithdraw.getStatus() == WalletWithdrawStatus.WALLET_DEBITED) {
-                log.warn("Withdrawal {} failed after wallet debit. Triggering compensation.", event.withdrawalId());
-                performCompensation(walletWithdraw);
-            }
-
-            // TODO: Send failure notifications (email, SMS, etc.)
-            log.info("Failure notification sent for withdrawal: {}", event.withdrawalId());
-
-        } catch (Exception e) {
-            log.error("Failed to handle withdrawal failure for: {}", event.withdrawalId(), e);
+        if (Math.random() < 0.5) {
+            log.error("Simulating transient failure for withdrawal: {}", event.withdrawalId());
+            throw new RuntimeException();
         }
+
+        WalletWithdraw walletWithdraw = walletWithdrawRepository.findById(event.withdrawalId());
+
+        if (walletWithdraw.getStatus() == WalletWithdrawStatus.WALLET_DEBITED) {
+            log.warn("Withdrawal {} failed after wallet debit. Triggering compensation.", event.withdrawalId());
+            performCompensation(walletWithdraw);
+        }
+
+        // TODO: Send failure notifications (email, SMS, etc.)
+        log.info("Failure notification sent for withdrawal: {}", event.withdrawalId());
+
     }
 
     private void performCompensation(WalletWithdraw walletWithdraw) {

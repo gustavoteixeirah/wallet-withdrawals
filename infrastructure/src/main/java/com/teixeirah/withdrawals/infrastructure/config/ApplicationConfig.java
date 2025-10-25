@@ -1,8 +1,13 @@
 package com.teixeirah.withdrawals.infrastructure.config;
 
+import com.teixeirah.withdrawals.application.input.GetWalletWithdrawInputPort;
 import com.teixeirah.withdrawals.application.input.InitiateWalletWithdrawInputPort;
 import com.teixeirah.withdrawals.application.input.ProcessPaymentInputPort;
 import com.teixeirah.withdrawals.application.input.ProcessWalletDebitInputPort;
+import com.teixeirah.withdrawals.application.usecase.GetWalletWithdrawUseCase;
+import com.teixeirah.withdrawals.application.usecase.InitiateWalletWithdrawalUseCase;
+import com.teixeirah.withdrawals.application.usecase.ProcessPaymentUseCase;
+import com.teixeirah.withdrawals.application.usecase.ProcessWalletDebitUseCase;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentProviderPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
@@ -15,14 +20,20 @@ import org.springframework.context.annotation.Configuration;
 public class ApplicationConfig {
 
     @Bean
-    public InitiateWalletWithdrawInputPort initiateWalletWithdrawInputPort(
+    public InitiateWalletWithdrawalUseCase initiateWalletWithdrawInputPort(
             WalletWithdrawRepository walletWithdrawRepository,
             DomainEventPublisherPort eventPublisher) {
         return new InitiateWalletWithdrawInputPort(walletWithdrawRepository, eventPublisher);
     }
 
     @Bean
-    public ProcessWalletDebitInputPort processWalletDebitInputPort(
+    public GetWalletWithdrawUseCase getWalletWithdrawInputPort(
+            WalletWithdrawRepository walletWithdrawRepository) {
+        return new GetWalletWithdrawInputPort(walletWithdrawRepository);
+    }
+
+    @Bean
+    public ProcessWalletDebitUseCase processWalletDebitInputPort(
             WalletWithdrawRepository walletWithdrawRepository,
             WalletServicePort walletServicePort,
             DomainEventPublisherPort eventPublisher) {
@@ -30,7 +41,7 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public ProcessPaymentInputPort processPaymentInputPort(
+    public ProcessPaymentUseCase processPaymentInputPort(
             WalletWithdrawRepository walletWithdrawRepository,
             PaymentProviderPort paymentProviderPort,
             PaymentSourceProviderPort paymentSourceProviderPort,

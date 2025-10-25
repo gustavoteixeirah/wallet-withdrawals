@@ -32,7 +32,7 @@ public class ApplicationConfig {
         InitiateWalletWithdrawalUseCase useCase =
                 new InitiateWalletWithdrawInputPort(walletWithdrawRepository, eventPublisher);
 
-        useCase = transactionalWrapper.wrap(useCase, new WrapperContext());
+//        useCase = transactionalWrapper.wrap(useCase, new WrapperContext());
 
         return useCase;
     }

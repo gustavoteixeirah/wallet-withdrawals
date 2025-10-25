@@ -3,6 +3,7 @@ package com.teixeirah.withdrawals.application.input;
 import com.teixeirah.withdrawals.application.command.InitiateWalletWithdrawalCommand;
 import com.teixeirah.withdrawals.application.response.InitiateWalletWithdrawalResponse;
 import com.teixeirah.withdrawals.application.usecase.InitiateWalletWithdrawalUseCase;
+import com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUseCase;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.value.objects.Account;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
@@ -12,6 +13,7 @@ import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository
 
 import java.util.Objects;
 
+@TransactionalUseCase
 public class InitiateWalletWithdrawInputPort implements InitiateWalletWithdrawalUseCase {
 
     private final WalletWithdrawRepository walletWithdrawRepository;

@@ -1,12 +1,12 @@
 package com.teixeirah.withdrawals.application.input;
 
+import com.teixeirah.withdrawals.application.command.GetWalletWithdrawCommand;
 import com.teixeirah.withdrawals.application.response.WalletWithdrawResponse;
 import com.teixeirah.withdrawals.application.usecase.GetWalletWithdrawUseCase;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 
 import java.util.Objects;
-import java.util.UUID;
 
 public class GetWalletWithdrawInputPort implements GetWalletWithdrawUseCase {
 
@@ -17,8 +17,8 @@ public class GetWalletWithdrawInputPort implements GetWalletWithdrawUseCase {
     }
 
     @Override
-    public WalletWithdrawResponse execute(UUID id) {
-        WalletWithdraw walletWithdraw = walletWithdrawRepository.findById(id);
+    public WalletWithdrawResponse execute(final GetWalletWithdrawCommand command) {
+        WalletWithdraw walletWithdraw = walletWithdrawRepository.findById(command.id());
         return mapToResponse(walletWithdraw);
     }
 

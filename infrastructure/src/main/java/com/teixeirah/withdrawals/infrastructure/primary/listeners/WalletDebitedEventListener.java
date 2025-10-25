@@ -22,11 +22,6 @@ public class WalletDebitedEventListener {
     public void handle(WalletDebitedEvent event) {
         log.info("Received WalletDebitedEvent for withdrawal: {}", event.withdrawalId());
 
-        if (Math.random() < 0.5) {
-            log.error("Simulating transient failure for withdrawal: {}", event.withdrawalId());
-            throw new RuntimeException();
-        }
-
         ProcessPaymentCommand command = new ProcessPaymentCommand(event.withdrawalId());
         processPaymentInputPort.execute(command);
 

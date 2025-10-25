@@ -23,11 +23,6 @@ public class WalletWithdrawFailedEventListener {
     public void handle(WalletWithdrawFailedEvent event) {
         log.info("Received WalletWithdrawFailedEvent for withdrawal: {} with reason: {}", event.withdrawalId(), event.reason());
 
-        if (Math.random() < 0.5) {
-            log.error("Simulating transient failure for withdrawal: {}", event.withdrawalId());
-            throw new RuntimeException();
-        }
-
         WalletWithdraw walletWithdraw = walletWithdrawRepository.findById(event.withdrawalId());
 
         if (walletWithdraw.getStatus() == WalletWithdrawStatus.WALLET_DEBITED) {

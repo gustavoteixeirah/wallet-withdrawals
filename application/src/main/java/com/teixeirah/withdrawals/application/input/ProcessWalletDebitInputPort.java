@@ -24,7 +24,7 @@ public class ProcessWalletDebitInputPort implements ProcessWalletDebitUseCase {
     }
 
     @Override
-    public void execute(final ProcessWalletDebitCommand command) {
+    public Void execute(final ProcessWalletDebitCommand command) {
 
         final var withdrawalId = command.walletWithdrawId();
 
@@ -35,5 +35,7 @@ public class ProcessWalletDebitInputPort implements ProcessWalletDebitUseCase {
         walletWithdrawRepository.save(walletWithdraw);
 
         eventPublisher.publish(walletWithdraw.pullDomainEvents());
+
+        return null;
     }
 }

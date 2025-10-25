@@ -30,6 +30,16 @@ infrastructure/  → REST API, database, Spring configuration
 
 ---
 
+## Architecture
+
+- See the diagrams in `docs/architecture.md` (Mermaid):
+  - Context diagram (external systems and consumers)
+  - Container diagram (service boundaries and modules)
+  - Component diagram (adapters, use cases, domain components)
+- The document also lists the runtime environment variables used for external URLs and payment source configuration.
+
+---
+
 ## How to run locally
 
 1. **Start dependencies**

@@ -6,8 +6,6 @@ import com.teixeirah.withdrawals.application.response.InitiateWalletWithdrawalRe
 import com.teixeirah.withdrawals.application.response.WalletWithdrawResponse;
 import com.teixeirah.withdrawals.application.usecase.GetWalletWithdrawUseCase;
 import com.teixeirah.withdrawals.application.usecase.InitiateWalletWithdrawalUseCase;
-import com.teixeirah.withdrawals.application.usecase.UseCase;
-import com.teixeirah.withdrawals.domain.wallet.withdraw.exceptions.WalletWithdrawNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -68,5 +66,6 @@ class WalletWithdrawHttpAdapter {
             String recipientRoutingNumber,
             String recipientNationalId,
             String recipientAccountNumber
-    ) {}
+    ) {
+    }
 }

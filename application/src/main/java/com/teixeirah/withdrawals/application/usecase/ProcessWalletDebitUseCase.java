@@ -3,6 +3,8 @@ package com.teixeirah.withdrawals.application.usecase;
 
 import com.teixeirah.withdrawals.application.command.ProcessWalletDebitCommand;
 
-public interface ProcessWalletDebitUseCase extends UseCase<ProcessWalletDebitCommand, Void> {
+public interface ProcessWalletDebitUseCase {
+
+    void execute(final ProcessWalletDebitCommand command);
 
 }

@@ -21,7 +21,8 @@ public class TransactionalAspect {
 
     }
 
-    @Around("@within(com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUseCase) || @annotation(com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUseCase)")    public Object applyTransaction(ProceedingJoinPoint joinPoint) {
+    @Around("@within(com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUseCase) || @annotation(com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUseCase)")
+    public Object applyTransaction(ProceedingJoinPoint joinPoint) {
         var signature = (MethodSignature) joinPoint.getSignature();
         var ann = signature.getMethod().getAnnotation(TransactionalUseCase.class);
         // Fallback to class-level if method-level not found

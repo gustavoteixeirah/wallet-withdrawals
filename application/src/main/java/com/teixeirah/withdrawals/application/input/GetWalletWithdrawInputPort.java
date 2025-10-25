@@ -3,11 +3,13 @@ package com.teixeirah.withdrawals.application.input;
 import com.teixeirah.withdrawals.application.command.GetWalletWithdrawCommand;
 import com.teixeirah.withdrawals.application.response.WalletWithdrawResponse;
 import com.teixeirah.withdrawals.application.usecase.GetWalletWithdrawUseCase;
+import com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUseCase;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 
 import java.util.Objects;
 
+@TransactionalUseCase
 public class GetWalletWithdrawInputPort implements GetWalletWithdrawUseCase {
 
     private final WalletWithdrawRepository walletWithdrawRepository;

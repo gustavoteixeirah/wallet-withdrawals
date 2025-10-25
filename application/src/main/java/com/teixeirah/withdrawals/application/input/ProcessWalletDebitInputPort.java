@@ -2,12 +2,14 @@ package com.teixeirah.withdrawals.application.input;
 
 import com.teixeirah.withdrawals.application.command.ProcessWalletDebitCommand;
 import com.teixeirah.withdrawals.application.usecase.ProcessWalletDebitUseCase;
+import com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUseCase;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 
 import java.util.Objects;
 
+@TransactionalUseCase
 public class ProcessWalletDebitInputPort implements ProcessWalletDebitUseCase {
 
     private final WalletWithdrawRepository walletWithdrawRepository;
@@ -24,7 +26,7 @@ public class ProcessWalletDebitInputPort implements ProcessWalletDebitUseCase {
     }
 
     @Override
-    public Void execute(final ProcessWalletDebitCommand command) {
+    public void execute(final ProcessWalletDebitCommand command) {
 
         final var withdrawalId = command.walletWithdrawId();
 
@@ -35,7 +37,5 @@ public class ProcessWalletDebitInputPort implements ProcessWalletDebitUseCase {
         walletWithdrawRepository.save(walletWithdraw);
 
         eventPublisher.publish(walletWithdraw.pullDomainEvents());
-
-        return null;
     }
 }

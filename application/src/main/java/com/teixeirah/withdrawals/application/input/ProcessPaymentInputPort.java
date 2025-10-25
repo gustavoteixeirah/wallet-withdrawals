@@ -2,6 +2,7 @@ package com.teixeirah.withdrawals.application.input;
 
 import com.teixeirah.withdrawals.application.command.ProcessPaymentCommand;
 import com.teixeirah.withdrawals.application.usecase.ProcessPaymentUseCase;
+import com.teixeirah.withdrawals.application.usecase.annotations.TransactionalUseCase;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentProviderPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
@@ -9,6 +10,7 @@ import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository
 
 import java.util.Objects;
 
+@TransactionalUseCase
 public class ProcessPaymentInputPort implements ProcessPaymentUseCase {
 
     private final WalletWithdrawRepository walletWithdrawRepository;
@@ -28,7 +30,7 @@ public class ProcessPaymentInputPort implements ProcessPaymentUseCase {
     }
 
     @Override
-    public Void execute(final ProcessPaymentCommand command) {
+    public void execute(final ProcessPaymentCommand command) {
 
         final var withdrawalId = command.withdrawalId();
 
@@ -39,7 +41,5 @@ public class ProcessPaymentInputPort implements ProcessPaymentUseCase {
         walletWithdrawRepository.save(walletWithdraw);
 
         eventPublisher.publish(walletWithdraw.pullDomainEvents());
-
-        return null;
     }
 }

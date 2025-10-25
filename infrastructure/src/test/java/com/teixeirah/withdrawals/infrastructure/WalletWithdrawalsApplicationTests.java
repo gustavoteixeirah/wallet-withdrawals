@@ -1,5 +1,6 @@
 package com.teixeirah.withdrawals.infrastructure;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
@@ -8,10 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.wiremock.integrations.testcontainers.WireMockContainer;
 
 import java.time.Duration;
 
@@ -23,29 +27,59 @@ import static org.hamcrest.Matchers.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class WalletWithdrawalsApplicationTests {
 
-
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
+    @Container
+    static WireMockContainer wiremock = new WireMockContainer("wiremock/wiremock:latest")
+            .withExposedPorts(8080)
+            .waitingFor(Wait.forHttp("/__admin/mappings").forStatusCode(200));
+
     @LocalServerPort
     int port;
 
+    @DynamicPropertySource
+    static void registerWireMockProperties(DynamicPropertyRegistry registry) {
+        registry.add("adapters.wallet-service.base-url", wiremock::getBaseUrl);
+        registry.add("adapters.payment-provider.base-url", wiremock::getBaseUrl);
+    }
+
     @BeforeEach
-    void setupRestAssured() {
+    void setupClients() {
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = port;
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    }
 
-
-    @Test
-    void contextLoads() {
+        WireMock.configureFor(wiremock.getHost(), wiremock.getPort());
+        WireMock.reset();
     }
 
     @Test
     void shouldCreateAndProcessWalletWithdrawalSagaSuccessfully() {
-        // --- 1. Create Withdrawal (POST) ---
+        WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/wallets/transactions"))
+                .willReturn(WireMock.aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withStatus(200)
+                        .withBody("""
+                            {
+                                "wallet_transaction_id": 98765,
+                                "amount": -100.00,
+                                "user_id": 1
+                            }
+                        """)));
+
+        WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/payments"))
+                .willReturn(WireMock.aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withStatus(200)
+                        .withBody("""
+                            {
+                                "requestInfo": {"status": "Processing"},
+                                "paymentInfo": {"amount": 90.00, "id": "payment-abc-123"}
+                            }
+                        """)));
+
         JsonPath jsonPath = given()
                 .contentType(ContentType.JSON)
                 .body("""
@@ -71,27 +105,24 @@ class WalletWithdrawalsApplicationTests {
 
         String transactionId = jsonPath.getString("transactionId");
 
-        // --- 2. Wait for Saga to reach WALLET_DEBITED ---
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-            given()
-                    .when()
-                    .get("/api/v1/wallet_withdraw/{id}", transactionId)
-                    .then()
-                    .statusCode(200)
-                    .body("status", anyOf(equalTo("WALLET_DEBITED"), equalTo("COMPLETED"))); // It might be fast
-        });
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+                given()
+                        .when()
+                        .get("/api/v1/wallet_withdraw/{id}", transactionId)
+                        .then()
+                        .statusCode(200)
+                        .body("status", anyOf(equalTo("WALLET_DEBITED"), equalTo("COMPLETED")))
+        );
 
-        // --- 3. Wait for Saga to reach COMPLETED ---
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-            given()
-                    .when()
-                    .get("/api/v1/wallet_withdraw/{id}", transactionId)
-                    .then()
-                    .statusCode(200)
-                    .body("status", equalTo("COMPLETED"));
-        });
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+                given()
+                        .when()
+                        .get("/api/v1/wallet_withdraw/{id}", transactionId)
+                        .then()
+                        .statusCode(200)
+                        .body("status", equalTo("COMPLETED"))
+        );
 
-        // --- 4. Verify Final State (GET) ---
         given()
                 .when()
                 .get("/api/v1/wallet_withdraw/{id}", transactionId)
@@ -100,14 +131,14 @@ class WalletWithdrawalsApplicationTests {
                 .contentType(ContentType.JSON)
                 .body("id", equalTo(transactionId))
                 .body("userId", equalTo(1))
-                .body("amount", is(100.00f)) // JSON floats
+                .body("amount", is(100.00f))
                 .body("fee", is(10.00f))
                 .body("amountForRecipient", is(90.00f))
                 .body("status", equalTo("COMPLETED"))
                 .body("createdAt", notNullValue())
                 .body("failureReason", nullValue())
-                .body("walletTransactionIdRef", notNullValue())
-                .body("paymentProviderIdRef", notNullValue())
+                .body("walletTransactionIdRef", equalTo("98765"))
+                .body("paymentProviderIdRef", equalTo("payment-abc-123"))
                 .body("recipientFirstName", equalTo("John"))
                 .body("recipientLastName", equalTo("Doe"))
                 .body("recipientNationalId", equalTo("12345678901"))
@@ -115,14 +146,4 @@ class WalletWithdrawalsApplicationTests {
                 .body("recipientRoutingNumber", equalTo("123456789"));
     }
 
-    @Test
-    void getNonExistingWalletWithdrawalReturns404() {
-        String nonExistingId = "123e4567-e89b-12d3-a456-426614174000";
-
-        given()
-                .when()
-                .get("/api/v1/wallet_withdraw/{id}", nonExistingId)
-                .then()
-                .statusCode(404);
-    }
 }

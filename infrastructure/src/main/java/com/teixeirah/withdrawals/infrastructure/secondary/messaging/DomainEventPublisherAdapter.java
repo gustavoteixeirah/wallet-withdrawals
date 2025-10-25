@@ -31,7 +31,6 @@ class DomainEventPublisherAdapter implements DomainEventPublisherPort {
                 }
             });
         } else {
-            // If no transaction, publish immediately
             publishEvents(events);
         }
     }

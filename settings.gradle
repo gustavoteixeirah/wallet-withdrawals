@@ -9,4 +9,5 @@ rootProject.name = 'withdrawals'
 
 include 'domain'
 include 'application'
+include 'infrastructure'
 

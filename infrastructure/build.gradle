@@ -1,0 +1,83 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.jooq.jooq-codegen-gradle' version '3.20.6'
+}
+
+group = 'com.teixeirah.withdrawals'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '21'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+ext {
+    jooqVersion = '3.20.6'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':domain')
+    implementation project(':application')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation "org.jooq:jooq:${jooqVersion}"
+    jooqCodegen "org.jooq:jooq-meta:${jooqVersion}"
+    jooqCodegen "org.jooq:jooq-codegen:${jooqVersion}"
+    jooqCodegen "org.jooq:jooq-meta-extensions:${jooqVersion}"
+    implementation 'org.springframework.boot:spring-boot-starter-jooq'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.named("compileJava") {
+    dependsOn(tasks.named("jooqCodegen"))
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir "build/generated-sources/jooq"
+        }
+    }
+}
+
+jooq {
+    configuration {
+        generator {
+            database {
+                name = "org.jooq.meta.extensions.ddl.DDLDatabase"
+                properties {
+                    property { key = "scripts"; value = "src/main/resources/db/migration/*.sql" }
+                    property { key = "sort"; value = "flyway" }
+                    property { key = "unqualifiedSchema"; value = "none" }
+                    property { key = "defaultNameCase"; value = "as_is" }
+                }
+            }
+        }
+    }
+}

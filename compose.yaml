@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16
+    restart: no
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: walletwithdrawals
+      POSTGRES_PASSWORD: walletwithdrawals
+      POSTGRES_DB: walletwithdrawals
+    volumes:
+      - postgres:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres:
+  postgres_data:

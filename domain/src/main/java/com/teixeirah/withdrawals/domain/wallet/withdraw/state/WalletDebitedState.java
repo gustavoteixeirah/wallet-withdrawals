@@ -18,7 +18,8 @@ public final class WalletDebitedState implements WalletWithdrawState {
     public void processPayment(WalletWithdraw context, PaymentProviderPort paymentProviderPort, PaymentSourceProviderPort paymentSourceProviderPort) {
         try {
             PaymentRequest paymentRequest = createPaymentRequest(context, paymentSourceProviderPort);
-            paymentProviderPort.createPayment(paymentRequest);
+            String receiptId = paymentProviderPort.createPayment(paymentRequest);
+            context.setPaymentProviderIdRef(receiptId);
             context.changeState(new CompletedState(), WalletWithdrawStatus.COMPLETED);
             context.registerDomainEvent(new WithdrawalCompletedEvent(context));
         } catch (PaymentRejectedException e) {

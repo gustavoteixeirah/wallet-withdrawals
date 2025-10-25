@@ -12,22 +12,25 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate; // Import RestTemplate
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 
 @Slf4j
 @Component
-public class PaymentProviderAdapter implements PaymentProviderPort {
+class PaymentProviderAdapter implements PaymentProviderPort {
 
     private final RestTemplate restTemplate;
     private final String paymentsUrl;
 
-    // --- DTOs ---
-    // PaymentRequest from domain matches API.
-    private record PaymentInfo(String id, BigDecimal amount) {}
-    private record RequestInfo(String status, String error) {}
-    private record PaymentResponse(RequestInfo requestInfo, PaymentInfo paymentInfo) {}
+    private record PaymentInfo(String id, BigDecimal amount) {
+    }
+
+    private record RequestInfo(String status, String error) {
+    }
+
+    private record PaymentResponse(RequestInfo requestInfo, PaymentInfo paymentInfo) {
+    }
 
     public PaymentProviderAdapter(
             RestTemplate restTemplate, // Inject RestTemplate
@@ -57,7 +60,6 @@ public class PaymentProviderAdapter implements PaymentProviderPort {
                 throw new PaymentProviderException("Payment provider returned an invalid response.");
             }
 
-            // Handle cases where 200 OK might still mean failure based on mock behavior
             if ("Failed".equalsIgnoreCase(response.requestInfo().status())) {
                 log.warn("Payment processed but final status is Failed: {}", response.requestInfo().error());
                 throw new PaymentRejectedException(response.requestInfo().error() != null ? response.requestInfo().error() : "Payment failed after processing");
@@ -67,22 +69,32 @@ public class PaymentProviderAdapter implements PaymentProviderPort {
             return response.paymentInfo().id();
 
         } catch (HttpClientErrorException e) {
-            // Treat most 4xx as rejections
             log.error("Payment Provider 4xx Error: Status {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
             throw new PaymentRejectedException("Payment rejected by provider: " + e.getResponseBodyAsString());
         } catch (HttpServerErrorException e) {
             log.error("Payment Provider 5xx Error: Status {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
-            // Attempt to parse body for specific rejection message based on mock behavior
+            String responseBody = e.getResponseBodyAsString();
+
             try {
-                PaymentResponse errorResponse = e.getResponseBodyAs(PaymentResponse.class);
-                if (errorResponse != null && "Failed".equalsIgnoreCase(errorResponse.requestInfo().status())) {
-                    throw new PaymentRejectedException(errorResponse.requestInfo().error() != null ? errorResponse.requestInfo().error() : "Payment failed");
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                PaymentResponse errorResponse = objectMapper.readValue(responseBody, PaymentResponse.class);
+
+                if (errorResponse != null && errorResponse.requestInfo() != null && "Failed".equalsIgnoreCase(errorResponse.requestInfo().status())) {
+                    String errorMessage = errorResponse.requestInfo().error() != null ? errorResponse.requestInfo().error() : "Payment failed";
+                    log.warn("Payment provider returned 5xx but indicates business failure: {}", errorMessage);
+                    throw new PaymentRejectedException(errorMessage);
                 }
-            } catch (Exception parseEx) {
-                log.warn("Could not parse 5xx error body for rejection details: {}", parseEx.getMessage());
+
+                String errorMessage = (errorResponse != null && errorResponse.requestInfo() != null && errorResponse.requestInfo().error() != null)
+                        ? errorResponse.requestInfo().error()
+                        : "Unknown server error details";
+                log.error("Payment provider returned 5xx with non-Failed status or missing details: {}", errorMessage);
+                throw new PaymentProviderException("Server error from payment provider: " + errorMessage);
+
+            } catch (com.fasterxml.jackson.core.JsonProcessingException parseEx) {
+                log.warn("Could not parse 5xx error body as PaymentResponse JSON: {}", parseEx.getMessage());
+                throw new PaymentProviderException("Server error from payment provider: " + e.getMessage());
             }
-            // If not parsed as rejection, treat as provider error
-            throw new PaymentProviderException("Server error from payment provider: " + e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error during RestTemplate createPayment call: {}", e.getMessage(), e);
             throw new PaymentProviderException("Unexpected error communicating with payment provider: " + e.getMessage());

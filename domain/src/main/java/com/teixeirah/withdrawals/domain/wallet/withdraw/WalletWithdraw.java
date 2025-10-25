@@ -46,10 +46,6 @@ public class WalletWithdraw {
         this.currentState = new PendingDebitState();
     }
 
-    public static WalletWithdraw reconstruct(UUID id, Long userId, BigDecimal amount, Recipient recipient) {
-        return new WalletWithdraw(id, userId, amount, recipient);
-    }
-
     public static WalletWithdraw reconstruct(UUID id, Long userId, BigDecimal amount, Recipient recipient, WalletWithdrawStatus status, Instant createdAt, String failureReason, String walletTransactionIdRef, String paymentProviderIdRef) {
         var withdraw = new WalletWithdraw(id, userId, amount, recipient);
         withdraw.createdAt = createdAt;

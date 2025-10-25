@@ -196,4 +196,18 @@ class WalletDebitedStateTest {
         var secondBatch = walletWithdraw.pullDomainEvents();
         assertTrue(secondBatch.isEmpty());
     }
+
+    @Test
+    void shouldThrowIllegalStateExceptionWhenProcessDebitIsCalled() {
+        // Given
+        // WalletDebitedState does not override processDebit, so it should throw IllegalStateException
+
+        // When & Then
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> walletDebitedState.processDebit(walletWithdraw, null)
+        );
+
+        assertEquals("Cannot process debit in state WalletDebitedState", exception.getMessage());
+    }
 }

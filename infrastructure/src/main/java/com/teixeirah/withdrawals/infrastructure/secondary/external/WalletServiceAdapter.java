@@ -37,7 +37,7 @@ public class WalletServiceAdapter implements WalletServicePort {
             @Value("${adapters.wallet-service.base-url}") String baseUrl
     ) {
         this.restTemplate = restTemplate;
-        this.walletServiceUrl = baseUrl + "/wallets/transactions";
+        this.walletServiceUrl = baseUrl;
     }
 
     @Override
@@ -45,10 +45,10 @@ public class WalletServiceAdapter implements WalletServicePort {
             throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
 
         log.atInfo()
-           .addKeyValue("userId", userId)
-           .addKeyValue("amount", amount)
-           .addKeyValue("transactionId", transactionId)
-           .log("wallet_service_debit_attempt");
+                .addKeyValue("userId", userId)
+                .addKeyValue("amount", amount)
+                .addKeyValue("transactionId", transactionId)
+                .log("wallet_service_debit_attempt");
         var requestPayload = new WalletTransactionRequest(amount.negate(), userId);
 
         HttpHeaders headers = new HttpHeaders();
@@ -63,22 +63,22 @@ public class WalletServiceAdapter implements WalletServicePort {
 
             if (response == null) {
                 log.atError()
-                   .addKeyValue("userId", userId)
-                   .log("wallet_service_null_response");
+                        .addKeyValue("userId", userId)
+                        .log("wallet_service_null_response");
                 throw new WalletServiceException("Wallet service returned an empty response.");
             }
 
             log.atInfo()
-               .addKeyValue("walletTransactionId", response.wallet_transaction_id())
-               .log("wallet_service_debit_success");
+                    .addKeyValue("walletTransactionId", response.wallet_transaction_id())
+                    .log("wallet_service_debit_success");
             return response.wallet_transaction_id();
 
         } catch (HttpClientErrorException e) {
             log.atError()
-               .addKeyValue("statusCode", e.getStatusCode())
-               .addKeyValue("responseBody", e.getResponseBodyAsString())
-               .setCause(e)
-               .log("wallet_service_4xx_error");
+                    .addKeyValue("statusCode", e.getStatusCode())
+                    .addKeyValue("responseBody", e.getResponseBodyAsString())
+                    .setCause(e)
+                    .log("wallet_service_4xx_error");
             if (e.getStatusCode().value() == 404) {
                 throw new WalletNotFoundException("Wallet not found: " + e.getResponseBodyAsString());
             }
@@ -88,16 +88,16 @@ public class WalletServiceAdapter implements WalletServicePort {
             throw new WalletServiceException("Client error calling wallet service: " + e.getMessage());
         } catch (HttpServerErrorException e) {
             log.atError()
-               .addKeyValue("statusCode", e.getStatusCode())
-               .addKeyValue("responseBody", e.getResponseBodyAsString())
-               .setCause(e)
-               .log("wallet_service_5xx_error");
+                    .addKeyValue("statusCode", e.getStatusCode())
+                    .addKeyValue("responseBody", e.getResponseBodyAsString())
+                    .setCause(e)
+                    .log("wallet_service_5xx_error");
             throw new WalletServiceException("Server error from wallet service: " + e.getMessage());
         } catch (Exception e) {
             log.atError()
-               .addKeyValue("errorMessage", e.getMessage())
-               .setCause(e)
-               .log("wallet_service_debit_unexpected_error");
+                    .addKeyValue("errorMessage", e.getMessage())
+                    .setCause(e)
+                    .log("wallet_service_debit_unexpected_error");
             throw new WalletServiceException("Unexpected error communicating with wallet service: " + e.getMessage());
         }
     }

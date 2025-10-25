@@ -41,8 +41,8 @@ class WalletWithdrawalsApplicationTests {
 
     @DynamicPropertySource
     static void registerWireMockProperties(DynamicPropertyRegistry registry) {
-        registry.add("adapters.wallet-service.base-url", wiremock::getBaseUrl);
-        registry.add("adapters.payment-provider.base-url", wiremock::getBaseUrl);
+        registry.add("adapters.wallet-service.base-url", () -> wiremock.getBaseUrl() + "/wallets/transactions");
+        registry.add("adapters.payment-provider.base-url", () -> wiremock.getBaseUrl() + "/api/v1/payments");
     }
 
     @BeforeEach

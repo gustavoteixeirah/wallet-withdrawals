@@ -18,52 +18,14 @@ spring:
 
 adapters:
   wallet-service:
-    base-url: "http://mockoon.tools.getontop.com:3000"
+    base-url: "${WALLET_SERVICE_URL:http://mockoon.tools.getontop.com:3000/wallets/transactions}"
   payment-provider:
-    base-url: "http://mockoon.tools.getontop.com:3000"
-  payment-source:
-    type: "COMPANY"
-    source-information:
-      name: "ONTOP INC"
-    account:
-      account-number: "0245253419"
-      currency: "USD"
-      routing-number: "028444018"
+    base-url: "${PAYMENT_PROVIDER_URL:http://mockoon.tools.getontop.com:3000/api/v1/payments}"
 
-# --- Resilience4j Configuration ---
-resilience4j:
-  # --- Time Limiter (Timeout) Config ---
-  timelimiter:
-    instances:
-      default:
-        timeoutDuration: 2s # Default timeout [cite: 134]
-        
-    # --- Retry Config ---
-    retry:
-      instances:
-        default-get:
-          maxAttempts: 3 # [cite: 146]
-          waitDuration: 500ms # [cite: 148]
-          retryExceptions: # [cite: 149]
-                          - java.util.concurrent.TimeoutException
-                          - java.io.IOException
-                          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
-          # We only retry idempotent GETs on transient errors
-
-    # --- Circuit Breaker Config ---
-    circuitbreaker:
-      instances:
-        # --- Wallet Service Config ---
-        wallet-service:
-          slidingWindowType: COUNT_BASED # [cite: 94]
-          slidingWindowSize: 10 # [cite: 98]
-          failureRateThreshold: 50 # [cite: 100]
-          waitDurationInOpenState: 10s # [cite: 106]
-          permittedNumberOfCallsInHalfOpenState: 3 # [cite: 107]
-          registerHealthIndicator: true # [cite: 116]
-          ignoreExceptions: # [cite: 111-114]
-                          # These are "business" errors, not system failures.
-                          # Do not open the circuit for them.
-                          - com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException
-                          - com.teixeirah.withdrawals.domain.wallet.service.exceptions.InsufficientFundsException
-
+payment:
+  source:
+    type: "${PAYMENT_SOURCE_TYPE:COMPANY}"
+    name: "${PAYMENT_SOURCE_NAME:ONTOP INC}"
+    account-number: "${PAYMENT_SOURCE_ACCOUNT_NUMBER:0245253419}"
+    currency: "${PAYMENT_SOURCE_CURRENCY:USD}"
+    routing-number: "${PAYMENT_SOURCE_ROUTING_NUMBER:028444018}"

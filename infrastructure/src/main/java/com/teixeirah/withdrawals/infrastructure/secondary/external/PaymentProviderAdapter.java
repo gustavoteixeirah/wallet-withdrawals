@@ -34,11 +34,11 @@ class PaymentProviderAdapter implements PaymentProviderPort {
     }
 
     public PaymentProviderAdapter(
-            RestTemplate restTemplate, // Inject RestTemplate
+            RestTemplate restTemplate,
             @Value("${adapters.payment-provider.base-url}") String baseUrl
     ) {
         this.restTemplate = restTemplate;
-        this.paymentsUrl = baseUrl + "/api/v1/payments"; // Construct full URL
+        this.paymentsUrl = baseUrl;
     }
 
     @Override

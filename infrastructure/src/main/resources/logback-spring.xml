@@ -4,15 +4,30 @@
 
     <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+
+            <mdc/>
+
+            <fieldNames>
+                <traceId>trace_id</traceId> <spanId>span_id</spanId>   </fieldNames>
+
         </encoder>
+    </appender>
+
+    <appender name="otel" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <captureKeyValuePairAttributes>true</captureKeyValuePairAttributes>
+        <captureExperimentalAttributes>true</captureExperimentalAttributes>
+        <captureCodeAttributes>true</captureCodeAttributes>
+        <captureMarkerAttribute>true</captureMarkerAttribute>
     </appender>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE_JSON" />
+        <appender-ref ref="otel" />
     </root>
 
     <logger name="com.teixeirah.withdrawals" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE_JSON" />
+        <appender-ref ref="otel" />
     </logger>
 
 </configuration>

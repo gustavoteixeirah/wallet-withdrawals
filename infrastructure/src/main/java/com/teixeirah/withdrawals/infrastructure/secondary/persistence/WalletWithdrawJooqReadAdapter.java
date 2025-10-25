@@ -5,6 +5,7 @@ import com.teixeirah.withdrawals.domain.value.objects.Recipient;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawStatus;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.exceptions.WalletWithdrawNotFoundException;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,6 +25,7 @@ public class WalletWithdrawJooqReadAdapter {
         this.dsl = dsl;
     }
 
+    @WithSpan(value = "find_wallet_withdraw_by_id_db")
     public WalletWithdraw findById(UUID id) {
         log.atInfo()
            .addKeyValue("id", id)

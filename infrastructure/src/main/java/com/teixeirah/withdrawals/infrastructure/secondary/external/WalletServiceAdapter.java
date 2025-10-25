@@ -4,6 +4,7 @@ import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.InsufficientFundsException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletServiceException;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +42,7 @@ public class WalletServiceAdapter implements WalletServicePort {
     }
 
     @Override
+    @WithSpan(value = "debit_wallet_via_service")
     public Long debit(Long userId, BigDecimal amount, UUID transactionId)
             throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
 

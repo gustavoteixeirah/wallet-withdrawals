@@ -1,6 +1,7 @@
 package com.teixeirah.withdrawals.infrastructure.secondary.persistence;
 
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,6 +20,7 @@ class WalletWithdrawJooqWriteAdapter {
         this.writeDsl = writeDsl;
     }
 
+    @WithSpan(value = "save_wallet_withdraw_db")
     public void save(WalletWithdraw walletWithdraw) {
         log.atInfo()
            .addKeyValue("id", walletWithdraw.getId())

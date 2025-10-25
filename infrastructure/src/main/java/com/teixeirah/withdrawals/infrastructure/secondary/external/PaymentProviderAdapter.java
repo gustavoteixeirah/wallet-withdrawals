@@ -5,6 +5,7 @@ import com.teixeirah.withdrawals.domain.payments.PaymentProviderPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentRequest;
 import com.teixeirah.withdrawals.domain.payments.exceptions.PaymentProviderException;
 import com.teixeirah.withdrawals.domain.payments.exceptions.PaymentRejectedException;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -42,6 +43,7 @@ class PaymentProviderAdapter implements PaymentProviderPort {
     }
 
     @Override
+    @WithSpan(value = "create_payment_via_provider")
     public String createPayment(PaymentRequest paymentRequest)
             throws PaymentRejectedException, PaymentProviderException {
 

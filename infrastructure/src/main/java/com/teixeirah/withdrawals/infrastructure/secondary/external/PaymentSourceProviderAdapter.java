@@ -5,6 +5,7 @@ import com.teixeirah.withdrawals.domain.payments.PaymentSource;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceInformation;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
 import com.teixeirah.withdrawals.infrastructure.config.PaymentSourceProperties;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ public class PaymentSourceProviderAdapter implements PaymentSourceProviderPort {
     }
 
     @Override
+    @WithSpan(value = "get_payment_source")
     public PaymentSource getPaymentSource() {
         log.atInfo()
            .addKeyValue("operation", "getPaymentSource")

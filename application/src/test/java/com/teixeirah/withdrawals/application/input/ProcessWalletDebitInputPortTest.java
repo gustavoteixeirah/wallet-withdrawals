@@ -4,6 +4,7 @@ import com.teixeirah.withdrawals.application.command.ProcessWalletDebitCommand;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.value.objects.Account;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
+import com.teixeirah.withdrawals.domain.wallet.service.WalletBalancePort;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.InsufficientFundsException;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.*;
 class ProcessWalletDebitInputPortTest {
 
     private WalletWithdrawRepository walletWithdrawRepository;
+    private WalletBalancePort walletBalancePort;
     private WalletServicePort walletServicePort;
     private DomainEventPublisherPort eventPublisher;
     private ProcessWalletDebitInputPort processWalletDebitInputPort;
@@ -34,10 +36,12 @@ class ProcessWalletDebitInputPortTest {
     @BeforeEach
     void setUp() {
         walletWithdrawRepository = mock(WalletWithdrawRepository.class);
-        walletServicePort = mock(WalletServicePort.class);
+    walletBalancePort = mock(WalletBalancePort.class);
+    walletServicePort = mock(WalletServicePort.class);
         eventPublisher = mock(DomainEventPublisherPort.class);
         processWalletDebitInputPort = new ProcessWalletDebitInputPort(
                 walletWithdrawRepository,
+        walletBalancePort,
                 walletServicePort,
                 eventPublisher
         );
@@ -55,7 +59,8 @@ class ProcessWalletDebitInputPortTest {
         WalletWithdraw walletWithdraw = spy(WalletWithdrawOperations.create(1L, BigDecimal.valueOf(100.00), recipient));
         when(walletWithdraw.getId()).thenReturn(withdrawalId);
 
-        when(walletWithdrawRepository.findById(withdrawalId)).thenReturn(walletWithdraw);
+    when(walletWithdrawRepository.findById(withdrawalId)).thenReturn(walletWithdraw);
+    when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
 
         // When
         processWalletDebitInputPort.execute(command);
@@ -63,7 +68,7 @@ class ProcessWalletDebitInputPortTest {
         // Then
         ArgumentCaptor<BigDecimal> amountCaptor = ArgumentCaptor.forClass(BigDecimal.class);
         verify(walletWithdrawRepository).findById(withdrawalId);
-        verify(walletWithdraw).processDebit(walletServicePort);
+    verify(walletWithdraw).processDebit(walletBalancePort, walletServicePort);
         verify(walletServicePort).debit(eq(1L), amountCaptor.capture(), eq(withdrawalId));
         assertEquals(new BigDecimal("110.00"), amountCaptor.getValue());
         verify(walletWithdrawRepository).save(walletWithdraw);
@@ -83,7 +88,7 @@ class ProcessWalletDebitInputPortTest {
         assertThrows(WalletWithdrawNotFoundException.class, () -> processWalletDebitInputPort.execute(command));
 
         verify(walletWithdrawRepository).findById(withdrawalId);
-        verifyNoInteractions(walletServicePort);
+        verifyNoInteractions(walletBalancePort, walletServicePort);
         verifyNoMoreInteractions(walletWithdrawRepository);
     }
 
@@ -99,7 +104,8 @@ class ProcessWalletDebitInputPortTest {
         WalletWithdraw walletWithdraw = spy(WalletWithdrawOperations.create(1L, BigDecimal.valueOf(100.00), recipient));
         when(walletWithdraw.getId()).thenReturn(withdrawalId);
 
-        when(walletWithdrawRepository.findById(withdrawalId)).thenReturn(walletWithdraw);
+    when(walletWithdrawRepository.findById(withdrawalId)).thenReturn(walletWithdraw);
+    when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
         doThrow(new InsufficientFundsException("Insufficient funds")).when(walletServicePort).debit(eq(1L), any(BigDecimal.class), eq(withdrawalId));
 
         // When
@@ -107,7 +113,7 @@ class ProcessWalletDebitInputPortTest {
 
         // Then
         verify(walletWithdrawRepository).findById(withdrawalId);
-        verify(walletWithdraw).processDebit(walletServicePort);
+    verify(walletWithdraw).processDebit(walletBalancePort, walletServicePort);
         ArgumentCaptor<BigDecimal> amountCaptor = ArgumentCaptor.forClass(BigDecimal.class);
         verify(walletServicePort).debit(eq(1L), amountCaptor.capture(), eq(withdrawalId));
         assertEquals(new BigDecimal("110.00"), amountCaptor.getValue());
@@ -130,7 +136,8 @@ class ProcessWalletDebitInputPortTest {
         WalletWithdraw walletWithdraw = spy(WalletWithdrawOperations.create(1L, BigDecimal.valueOf(100.00), recipient));
         when(walletWithdraw.getId()).thenReturn(withdrawalId);
 
-        when(walletWithdrawRepository.findById(withdrawalId)).thenReturn(walletWithdraw);
+    when(walletWithdrawRepository.findById(withdrawalId)).thenReturn(walletWithdraw);
+    when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
 
         RuntimeException saveException = new RuntimeException("Database error");
         doThrow(saveException).when(walletWithdrawRepository).save(walletWithdraw);
@@ -140,7 +147,7 @@ class ProcessWalletDebitInputPortTest {
 
         assertEquals(saveException, thrown);
         verify(walletWithdrawRepository).findById(withdrawalId);
-        verify(walletWithdraw).processDebit(walletServicePort);
+    verify(walletWithdraw).processDebit(walletBalancePort, walletServicePort);
         ArgumentCaptor<BigDecimal> amountCaptor = ArgumentCaptor.forClass(BigDecimal.class);
         verify(walletServicePort).debit(eq(1L), amountCaptor.capture(), eq(withdrawalId));
         assertEquals(new BigDecimal("110.00"), amountCaptor.getValue());

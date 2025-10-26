@@ -203,10 +203,10 @@ class WalletDebitedStateTest {
         // WalletDebitedState does not override processDebit, so it should throw IllegalStateException
 
         // When & Then
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> walletDebitedState.processDebit(walletWithdraw, null)
-        );
+    IllegalStateException exception = assertThrows(
+        IllegalStateException.class,
+        () -> walletDebitedState.processDebit(walletWithdraw, null, null)
+    );
 
         assertEquals("Cannot process debit in state WalletDebitedState", exception.getMessage());
     }

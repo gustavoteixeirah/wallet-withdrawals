@@ -38,6 +38,19 @@ infrastructure/  → REST API, database, Spring configuration
   - Component diagram (adapters, use cases, domain components)
 - The document also lists the runtime environment variables used for external URLs and payment source configuration.
 
+### Pre-debit balance validation
+
+- Before attempting a wallet debit, the domain now queries the current wallet balance via a dedicated read-only port.
+- A withdrawal fails immediately with reason "Insufficient funds" if the available balance is lower than the total to debit, where:
+  - total to debit = requested amount + 10% fee
+- This validation happens in the domain (PendingDebitState) and prevents unnecessary calls to the wallet debit endpoint when balance is insufficient.
+
+Configuration for the balance adapter:
+
+- Property: `adapters.wallet-balance.base-url`
+- Default: `http://mockoon.tools.getontop.com:3000/wallets/balance`
+- Environment variable override: `WALLET_BALANCE_URL`
+
 ---
 
 ## How to run locally

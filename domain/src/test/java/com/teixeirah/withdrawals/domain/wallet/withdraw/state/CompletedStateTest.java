@@ -31,10 +31,10 @@ class CompletedStateTest {
     @Test
     void shouldThrowIllegalStateExceptionWhenProcessDebitIsCalled() {
         // When & Then
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> completedState.processDebit(walletWithdraw, null)
-        );
+    IllegalStateException exception = assertThrows(
+        IllegalStateException.class,
+        () -> completedState.processDebit(walletWithdraw, null, null)
+    );
 
         assertEquals("Cannot process debit in state CompletedState", exception.getMessage());
     }

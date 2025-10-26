@@ -2,6 +2,7 @@ package com.teixeirah.withdrawals.domain.wallet.withdraw.state;
 
 import com.teixeirah.withdrawals.domain.value.objects.Account;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
+import com.teixeirah.withdrawals.domain.wallet.service.WalletBalancePort;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.InsufficientFundsException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
@@ -25,6 +26,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PendingDebitStateTest {
 
+    @Mock
+    private WalletBalancePort walletBalancePort;
     @Mock
     private WalletServicePort walletServicePort;
 
@@ -55,10 +58,11 @@ class PendingDebitStateTest {
     @Test
     void shouldProcessDebitSuccessfully() throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
         // Given
+        when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
         when(walletServicePort.debit(eq(1L), eq(new BigDecimal("110.00")), any())).thenReturn(123L);
 
         // When
-        pendingDebitState.processDebit(walletWithdraw, walletServicePort);
+        pendingDebitState.processDebit(walletWithdraw, walletBalancePort, walletServicePort);
 
         // Then
         verify(walletServicePort).debit(eq(1L), eq(new BigDecimal("110.00")), any());
@@ -70,11 +74,12 @@ class PendingDebitStateTest {
     @Test
     void shouldHandleInsufficientFundsException() throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
         // Given
+        when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
         InsufficientFundsException exception = new InsufficientFundsException("Insufficient funds");
         when(walletServicePort.debit(anyLong(), any(BigDecimal.class), any())).thenThrow(exception);
 
         // When
-        pendingDebitState.processDebit(walletWithdraw, walletServicePort);
+        pendingDebitState.processDebit(walletWithdraw, walletBalancePort, walletServicePort);
 
         // Then
         verify(walletServicePort).debit(anyLong(), any(BigDecimal.class), any());
@@ -85,11 +90,12 @@ class PendingDebitStateTest {
     @Test
     void shouldHandleWalletNotFoundException() throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
         // Given
+        when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
         WalletNotFoundException exception = new WalletNotFoundException("Wallet not found");
         when(walletServicePort.debit(anyLong(), any(BigDecimal.class), any())).thenThrow(exception);
 
         // When
-        pendingDebitState.processDebit(walletWithdraw, walletServicePort);
+        pendingDebitState.processDebit(walletWithdraw, walletBalancePort, walletServicePort);
 
         // Then
         verify(walletServicePort).debit(anyLong(), any(BigDecimal.class), any());
@@ -100,11 +106,12 @@ class PendingDebitStateTest {
     @Test
     void shouldHandleWalletServiceException() throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
         // Given
+        when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
         WalletServiceException exception = new WalletServiceException("Service unavailable");
         when(walletServicePort.debit(anyLong(), any(BigDecimal.class), any())).thenThrow(exception);
 
         // When
-        pendingDebitState.processDebit(walletWithdraw, walletServicePort);
+        pendingDebitState.processDebit(walletWithdraw, walletBalancePort, walletServicePort);
 
         // Then
         verify(walletServicePort).debit(anyLong(), any(BigDecimal.class), any());
@@ -115,12 +122,13 @@ class PendingDebitStateTest {
     @Test
     void shouldHandleGenericExceptionFromWalletService() throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
         // Given
+        when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
         RuntimeException exception = new RuntimeException("Unexpected error");
         when(walletServicePort.debit(anyLong(), any(BigDecimal.class), any())).thenThrow(exception);
 
         // When & Then
         assertThrows(RuntimeException.class, () ->
-            pendingDebitState.processDebit(walletWithdraw, walletServicePort));
+            pendingDebitState.processDebit(walletWithdraw, walletBalancePort, walletServicePort));
 
         // Then
         verify(walletServicePort).debit(anyLong(), any(BigDecimal.class), any());
@@ -131,10 +139,11 @@ class PendingDebitStateTest {
     @Test
     void shouldClearEventsAfterPublishingOnDebitSuccess() throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
         // Given
+        when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("100000.00"));
         when(walletServicePort.debit(eq(1L), eq(new BigDecimal("110.00")), any())).thenReturn(123L);
 
         // When
-        pendingDebitState.processDebit(walletWithdraw, walletServicePort);
+        pendingDebitState.processDebit(walletWithdraw, walletBalancePort, walletServicePort);
 
         // Then
         var firstBatch = walletWithdraw.pullDomainEvents();
@@ -143,5 +152,18 @@ class PendingDebitStateTest {
 
         var secondBatch = walletWithdraw.pullDomainEvents();
         assertTrue(secondBatch.isEmpty());
+    }
+
+    @Test
+    void shouldFailWhenBalanceIsInsufficientBeforeDebit() throws WalletServiceException, WalletNotFoundException, InsufficientFundsException {
+        // Given
+        when(walletBalancePort.getBalance(1L)).thenReturn(new BigDecimal("50.00"));
+
+        // When
+        pendingDebitState.processDebit(walletWithdraw, walletBalancePort, walletServicePort);
+
+        // Then
+        verify(walletServicePort, never()).debit(anyLong(), any(BigDecimal.class), any());
+        assertEquals(WalletWithdrawStatus.FAILED, walletWithdraw.getStatus());
     }
 }

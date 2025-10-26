@@ -11,6 +11,7 @@ import com.teixeirah.withdrawals.application.usecase.ProcessWalletDebitUseCase;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentProviderPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
+import com.teixeirah.withdrawals.domain.wallet.service.WalletBalancePort;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 import org.springframework.context.annotation.Bean;
@@ -37,10 +38,11 @@ public class ApplicationConfig {
     @Bean
     public ProcessWalletDebitUseCase processWalletDebitInputPort(
             WalletWithdrawRepository walletWithdrawRepository,
+            WalletBalancePort walletBalancePort,
             WalletServicePort walletServicePort,
             DomainEventPublisherPort eventPublisher) {
 
-        return new ProcessWalletDebitInputPort(walletWithdrawRepository, walletServicePort, eventPublisher);
+        return new ProcessWalletDebitInputPort(walletWithdrawRepository, walletBalancePort, walletServicePort, eventPublisher);
     }
 
     @Bean

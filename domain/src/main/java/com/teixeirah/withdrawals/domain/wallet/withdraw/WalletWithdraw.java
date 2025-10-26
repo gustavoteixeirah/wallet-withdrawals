@@ -4,6 +4,7 @@ import com.teixeirah.withdrawals.domain.events.DomainEvent;
 import com.teixeirah.withdrawals.domain.payments.PaymentProviderPort;
 import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
+import com.teixeirah.withdrawals.domain.wallet.service.WalletBalancePort;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletWithdrawFailedEvent;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.state.CompletedState;
@@ -81,8 +82,8 @@ public class WalletWithdraw {
         return currentEvents;
     }
 
-    public void processDebit(WalletServicePort walletServicePort) {
-        this.currentState.processDebit(this, walletServicePort);
+    public void processDebit(WalletBalancePort balancePort, WalletServicePort walletServicePort) {
+        this.currentState.processDebit(this, balancePort, walletServicePort);
     }
 
     public void processPayment(PaymentProviderPort paymentProviderPort, PaymentSourceProviderPort paymentSourceProviderPort) {

@@ -137,7 +137,7 @@ class WalletWithdrawTest {
         assertEquals(walletTransactionIdRef, reconstructed.getWalletTransactionIdRef());
 
         // Verify state behavior - processDebit should throw IllegalStateException
-        assertThrows(IllegalStateException.class, () -> reconstructed.processDebit(null));
+    assertThrows(IllegalStateException.class, () -> reconstructed.processDebit(null, null));
     }
 
     @Test
@@ -165,7 +165,7 @@ class WalletWithdrawTest {
         assertEquals(paymentProviderIdRef, reconstructed.getPaymentProviderIdRef());
 
         // Verify state behavior - both processDebit and processPayment should throw IllegalStateException
-        assertThrows(IllegalStateException.class, () -> reconstructed.processDebit(null));
+    assertThrows(IllegalStateException.class, () -> reconstructed.processDebit(null, null));
         assertThrows(IllegalStateException.class, () -> reconstructed.processPayment(null, null));
     }
 
@@ -192,7 +192,7 @@ class WalletWithdrawTest {
         assertEquals(failureReason, reconstructed.getFailureReason());
 
         // Verify state behavior - both processDebit and processPayment should throw IllegalStateException
-        assertThrows(IllegalStateException.class, () -> reconstructed.processDebit(null));
+    assertThrows(IllegalStateException.class, () -> reconstructed.processDebit(null, null));
         assertThrows(IllegalStateException.class, () -> reconstructed.processPayment(null, null));
     }
 }

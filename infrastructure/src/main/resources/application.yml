@@ -21,6 +21,8 @@ adapters:
     base-url: "${WALLET_SERVICE_URL:http://mockoon.tools.getontop.com:3000/wallets/transactions}"
   payment-provider:
     base-url: "${PAYMENT_PROVIDER_URL:http://mockoon.tools.getontop.com:3000/api/v1/payments}"
+  wallet-balance:
+    base-url: "${WALLET_BALANCE_URL:http://mockoon.tools.getontop.com:3000/wallets/balance}"
 
 payment:
   source:

@@ -14,10 +14,9 @@ class WalletWithdrawCreatedEventTest {
 
     @Test
     void shouldCreateTransactionCreatedEventWithTransaction() {
-        WalletWithdrawOperations operations = new WalletWithdrawOperations();
         Account account = new Account("987654321", "123456789");
         Recipient recipient = new Recipient("John", "Doe", "123456789", account);
-        WalletWithdraw walletWithdraw = operations.create(1L, BigDecimal.valueOf(100.00), recipient);
+        WalletWithdraw walletWithdraw = WalletWithdrawOperations.create(1L, BigDecimal.valueOf(100.00), recipient);
 
         WalletWithdrawCreatedEvent event = new WalletWithdrawCreatedEvent(walletWithdraw);
 

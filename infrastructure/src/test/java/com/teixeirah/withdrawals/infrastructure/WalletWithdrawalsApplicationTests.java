@@ -1,7 +1,7 @@
 package com.teixeirah.withdrawals.infrastructure;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
-import io.restassured.RestAssured;
+import java.time.Duration;
+
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +17,17 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.wiremock.integrations.testcontainers.WireMockContainer;
 
-import java.time.Duration;
+import com.github.tomakehurst.wiremock.client.WireMock;
 
+import static com.teixeirah.withdrawals.infrastructure.support.RestAssuredTestSupport.configureForPort;
+import static com.teixeirah.withdrawals.infrastructure.support.WalletWithdrawalRequestBuilder.walletWithdrawalRequest;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -47,10 +53,7 @@ class WalletWithdrawalsApplicationTests {
 
     @BeforeEach
     void setupClients() {
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = port;
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-
+        configureForPort(port);
         WireMock.configureFor(wiremock.getHost(), wiremock.getPort());
         WireMock.reset();
     }
@@ -80,21 +83,11 @@ class WalletWithdrawalsApplicationTests {
                             }
                         """)));
 
-        JsonPath jsonPath = given()
-                .contentType(ContentType.JSON)
-                .body("""
-                        {
-                            "userId": 1,
-                            "amount": 100.00,
-                            "recipientFirstName": "John",
-                            "recipientLastName": "Doe",
-                            "recipientRoutingNumber": "123456789",
-                            "recipientNationalId": "12345678901",
-                            "recipientAccountNumber": "987654321"
-                        }
-                        """)
-                .when()
-                .post("/api/v1/wallet_withdraw")
+    JsonPath jsonPath = given()
+        .contentType(ContentType.JSON)
+        .body(walletWithdrawalRequest().build())
+        .when()
+        .post("/api/v1/wallet_withdraw")
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)

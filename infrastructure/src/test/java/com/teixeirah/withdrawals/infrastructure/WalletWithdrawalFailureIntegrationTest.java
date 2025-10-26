@@ -1,10 +1,9 @@
 package com.teixeirah.withdrawals.infrastructure;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
-import io.restassured.RestAssured;
+import java.time.Duration;
+
 import io.restassured.http.ContentType;
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,8 +17,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.wiremock.integrations.testcontainers.WireMockContainer;
 
-import java.time.Duration;
+import com.github.tomakehurst.wiremock.client.WireMock;
 
+import static com.teixeirah.withdrawals.infrastructure.support.RestAssuredTestSupport.configureForPort;
+import static com.teixeirah.withdrawals.infrastructure.support.WalletWithdrawalRequestBuilder.walletWithdrawalRequest;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
@@ -50,17 +51,13 @@ class WalletWithdrawalFailureIntegrationTest {
 
     @BeforeEach
     void setupClients() {
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = port;
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-
+        configureForPort(port);
         WireMock.configureFor(wiremock.getHost(), wiremock.getPort());
         WireMock.reset();
     }
 
     @Test
     void shouldFailWithReasonWhenWalletDebitReturns404() {
-        // Arrange: High balance so we reach debit, then mock Wallet Service to return 404 (Wallet Not Found)
         stubWalletBalanceHigh();
         WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/wallets/transactions"))
                 .willReturn(WireMock.aResponse()
@@ -86,7 +83,6 @@ class WalletWithdrawalFailureIntegrationTest {
                                     { "code": "INSUFFICIENT_FUNDS", "message": "User balance is too low" }
                                 """)));
 
-        // Act: Initiate withdrawal
         String transactionId = initiateWithdrawal();
 
         awaitStatusAndVerifyReason(transactionId, "Insufficient funds");
@@ -96,27 +92,26 @@ class WalletWithdrawalFailureIntegrationTest {
     void shouldFailWithReasonWhenWalletDebitReturns500() {
         stubWalletBalanceHigh();
         WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/wallets/transactions"))
-                .willReturn(WireMock.aResponse()
-                        .withHeader("Content-Type", "application/json")
-                        .withStatus(500) // Simulate Server Error
-                        .withBody("""
-                                    { "code": "GENERIC_ERROR", "message": "something bad happened" }
-                                """)));
+        .willReturn(WireMock.aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withStatus(500)
+            .withBody("""
+                    { "code": "GENERIC_ERROR", "message": "something bad happened" }
+                """)));
 
         String transactionId = initiateWithdrawal();
 
         awaitStatusAndVerifyReason(transactionId, startsWith("Wallet service error:"));
     }
 
-
     @Test
     void shouldFailWithReasonWhenPaymentProviderReturns400() {
         stubWalletBalanceHigh();
-        stubWalletServiceSuccess(); // Ensure debit step passes
+        stubWalletServiceSuccess();
         WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/payments"))
                 .willReturn(WireMock.aResponse()
                         .withHeader("Content-Type", "application/json")
-                        .withStatus(400) // Simulate Bad Request/Rejection
+            .withStatus(400)
                         .withBody("""
                                     { "error": "body is invalid, check postman collection example" }
                                 """)));
@@ -133,7 +128,7 @@ class WalletWithdrawalFailureIntegrationTest {
         WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/payments"))
                 .willReturn(WireMock.aResponse()
                         .withHeader("Content-Type", "application/json")
-                        .withStatus(500) // Simulate 500
+            .withStatus(500)
                         .withBody("""
                                     {
                                         "requestInfo": {"status": "Failed", "error": "bank rejected payment"},
@@ -153,7 +148,7 @@ class WalletWithdrawalFailureIntegrationTest {
         WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/api/v1/payments"))
                 .willReturn(WireMock.aResponse()
                         .withHeader("Content-Type", "application/json")
-                        .withStatus(500) // Simulate 500
+            .withStatus(500)
                         .withBody("""
                                     {
                                         "requestInfo": {"status": "Error", "error": "Internal Server Error"},
@@ -163,12 +158,11 @@ class WalletWithdrawalFailureIntegrationTest {
 
         String transactionId = initiateWithdrawal();
 
-        awaitStatusAndVerifyReason(transactionId, Matchers.startsWith("Payment provider error:"));
+        awaitStatusAndVerifyReason(transactionId, startsWith("Payment provider error:"));
     }
 
     @Test
     void shouldFailEarlyWhenBalanceIsInsufficient() {
-        // Arrange: low balance and ensure debit would be OK if called
         WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/wallets/balance"))
                 .withQueryParam("user_id", WireMock.equalTo("1"))
                 .willReturn(WireMock.aResponse()
@@ -178,29 +172,22 @@ class WalletWithdrawalFailureIntegrationTest {
                                     { "balance": 50.00, "user_id": 1 }
                                 """)));
 
-        // Also stub debit success, but it should NOT be called
         stubWalletServiceSuccess();
 
-        // Act
         String transactionId = initiateWithdrawal();
 
-        // Assert: failed early and debit endpoint not called
         awaitStatusAndVerifyReason(transactionId, "Insufficient funds");
         WireMock.verify(0, WireMock.postRequestedFor(WireMock.urlEqualTo("/wallets/transactions")));
     }
 
-
     private String initiateWithdrawal() {
         return given()
                 .contentType(ContentType.JSON)
-                .body("""
-                        {
-                            "userId": 1,
-                            "amount": 100.00,
-                            "recipientFirstName": "Test", "recipientLastName": "Fail",
-                            "recipientRoutingNumber": "111", "recipientNationalId": "222", "recipientAccountNumber": "333"
-                        }
-                        """)
+                .body(walletWithdrawalRequest()
+                        .withRecipient("Test", "Fail")
+                        .withRecipientAccount("333", "111")
+                        .withRecipientNationalId("222")
+                        .build())
                 .when()
                 .post("/api/v1/wallet_withdraw")
                 .then()
@@ -244,7 +231,7 @@ class WalletWithdrawalFailureIntegrationTest {
                 .then()
                 .statusCode(200)
                 .body("status", equalTo("FAILED"))
-                .body("failureReason", reasonMatcher); // Use the matcher here
+                .body("failureReason", reasonMatcher);
     }
 
     private void stubWalletServiceSuccess() {

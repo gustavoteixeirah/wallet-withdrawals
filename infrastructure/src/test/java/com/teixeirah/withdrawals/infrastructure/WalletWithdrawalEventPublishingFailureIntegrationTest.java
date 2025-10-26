@@ -1,6 +1,5 @@
 package com.teixeirah.withdrawals.infrastructure;
 
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,8 +15,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static com.teixeirah.withdrawals.infrastructure.support.DatabaseTestUtils.resetWalletWithdrawalsTable;
+import static com.teixeirah.withdrawals.infrastructure.support.RestAssuredTestSupport.configureForPort;
+import static com.teixeirah.withdrawals.infrastructure.support.WalletWithdrawalRequestBuilder.walletWithdrawalRequest;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.jooq.generated.wallet_withdrawals.Tables.WALLET_WITHDRAWALS_;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.main.allow-bean-definition-overriding=true")
@@ -43,34 +46,21 @@ class WalletWithdrawalEventPublishingFailureIntegrationTest {
 
     @BeforeEach
     void setupRestAssured() {
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = port;
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-        dsl.execute("SET search_path TO wallet_withdrawals");
-        dsl.execute("DELETE FROM wallet_withdrawals");
+        configureForPort(port);
+        resetWalletWithdrawalsTable(dsl);
     }
 
     @Test
     void shouldReturn500AndNotSaveWalletWithdrawalWhenEventPublishingFails() {
         given()
                 .contentType(ContentType.JSON)
-                .body("""
-                        {
-                            "userId": 1,
-                            "amount": 100.00,
-                            "recipientFirstName": "John",
-                            "recipientLastName": "Doe",
-                            "recipientRoutingNumber": "123456789",
-                            "recipientNationalId": "12345678901",
-                            "recipientAccountNumber": "987654321"
-                        }
-                        """)
+                .body(walletWithdrawalRequest().build())
                 .when()
                 .post("/api/v1/wallet_withdraw")
                 .then()
                 .statusCode(500);
 
-        Integer count = dsl.fetch("SELECT COUNT(*) FROM wallet_withdrawals").into(Integer.class).getFirst();
+        int count = dsl.fetchCount(WALLET_WITHDRAWALS_);
         assertThat(count).isEqualTo(0);
     }
 }

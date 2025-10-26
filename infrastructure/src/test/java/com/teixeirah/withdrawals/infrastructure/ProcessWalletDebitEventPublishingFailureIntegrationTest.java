@@ -27,7 +27,7 @@ import static org.jooq.generated.wallet_withdrawals.Tables.WALLET_WITHDRAWALS_;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -37,10 +37,10 @@ class ProcessWalletDebitEventPublishingFailureIntegrationTest {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
-    @MockBean
+    @MockitoBean
     private DomainEventPublisherPort domainEventPublisher;
 
-    @MockBean
+    @MockitoBean
     private WalletServicePort walletServicePort;
 
     @Autowired

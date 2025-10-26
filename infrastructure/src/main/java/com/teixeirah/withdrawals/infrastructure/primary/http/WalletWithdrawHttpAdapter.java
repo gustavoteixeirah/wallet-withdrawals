@@ -6,6 +6,7 @@ import com.teixeirah.withdrawals.application.response.InitiateWalletWithdrawalRe
 import com.teixeirah.withdrawals.application.response.WalletWithdrawResponse;
 import com.teixeirah.withdrawals.application.usecase.GetWalletWithdrawUseCase;
 import com.teixeirah.withdrawals.application.usecase.InitiateWalletWithdrawalUseCase;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ class WalletWithdrawHttpAdapter {
     private final GetWalletWithdrawUseCase getWalletWithdrawUseCase;
 
     @PostMapping("/wallet_withdraw")
+    @WithSpan(value = "Initiating wallet withdraw")
     ResponseEntity<InitiateWalletWithdrawalResponse> initiateWalletWithdraw(
             @RequestBody InitiateWalletWithdrawRequest request) {
 

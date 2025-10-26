@@ -31,6 +31,12 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.21.0")
+    }
+}
+
 dependencies {
     // Project dependencies
     implementation project(':domain')
@@ -51,6 +57,12 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
+
+    // Micrometer Tracing with OpenTelemetry (Otel)
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
+    implementation 'io.opentelemetry:opentelemetry-api'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 
     // Utilities
     compileOnly 'org.projectlombok:lombok'

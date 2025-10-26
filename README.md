@@ -36,6 +36,7 @@ infrastructure/  → REST API, database, Spring configuration
   - Context diagram (external systems and consumers)
   - Container diagram (service boundaries and modules)
   - Component diagram (adapters, use cases, domain components)
+- For details on the distributed tracing implementation, see `docs/tracing_solution.md`.
 - The document also lists the runtime environment variables used for external URLs and payment source configuration.
 
 ### Pre-debit balance validation

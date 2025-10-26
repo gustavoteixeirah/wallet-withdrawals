@@ -4,6 +4,7 @@ import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawRepository;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdrawStatus;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletWithdrawFailedEvent;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -19,6 +20,7 @@ public class WalletWithdrawFailedEventListener {
     private final WalletWithdrawRepository walletWithdrawRepository;
 
     @Async
+    @WithSpan(value = "Received WalletWithdrawFailedEvent to mark withdrawal as failed")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WalletWithdrawFailedEvent.class)
     public void handle(WalletWithdrawFailedEvent event) {
         log.atInfo()

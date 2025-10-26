@@ -12,8 +12,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.util.List;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
+@Component("defaultEventPublisher")
 class DomainEventPublisherAdapter implements DomainEventPublisherPort {
 
     private final ApplicationEventPublisher applicationEventPublisher;

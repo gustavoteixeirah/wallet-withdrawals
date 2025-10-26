@@ -4,8 +4,11 @@ import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.InsufficientFundsException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletServiceException;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -33,7 +36,7 @@ public class WalletServiceAdapter implements WalletServicePort {
     }
 
     public WalletServiceAdapter(
-            RestTemplate restTemplate,
+            @Qualifier("walletServiceRestTemplate") RestTemplate restTemplate,
             @Value("${adapters.wallet-service.base-url}") String baseUrl
     ) {
         this.restTemplate = restTemplate;
@@ -41,7 +44,10 @@ public class WalletServiceAdapter implements WalletServicePort {
     }
 
     @Override
-    public Long debit(Long userId, BigDecimal amount, UUID transactionId)
+    @WithSpan(value = "Debiting wallet")
+    public Long debit(@SpanAttribute("wallet.user.id") Long userId,
+                      @SpanAttribute("wallet.amount") BigDecimal amount,
+                      @SpanAttribute("wallet.transaction.id") UUID transactionId)
             throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
 
         log.atInfo()

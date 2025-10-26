@@ -3,8 +3,10 @@ package com.teixeirah.withdrawals.infrastructure.secondary.external;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletBalancePort;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletServiceException;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -23,15 +25,19 @@ public class WalletBalanceAdapter implements WalletBalancePort {
     private final RestTemplate restTemplate;
     private final String balanceBaseUrl;
 
-    private record BalanceResponse(BigDecimal balance, long user_id) {}
+    private record BalanceResponse(BigDecimal balance, long user_id) {
+    }
 
-    public WalletBalanceAdapter(RestTemplate restTemplate,
-                                @Value("${adapters.wallet-balance.base-url:http://mockoon.tools.getontop.com:3000/wallets/balance}") String balanceBaseUrl) {
+    public WalletBalanceAdapter(
+            @Qualifier("walletBalanceRestTemplate") RestTemplate restTemplate,
+            @Value("${adapters.wallet-balance.base-url:http://mockoon.tools.getontop.com:3000/wallets/balance}") String balanceBaseUrl
+    ) {
         this.restTemplate = restTemplate;
         this.balanceBaseUrl = balanceBaseUrl;
     }
 
     @Override
+    @WithSpan(value = "Getting wallet balance")
     public BigDecimal getBalance(Long userId) throws WalletNotFoundException, WalletServiceException {
         var uri = UriComponentsBuilder.fromHttpUrl(balanceBaseUrl)
                 .queryParam("user_id", userId)

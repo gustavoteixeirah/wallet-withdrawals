@@ -31,3 +31,13 @@ payment:
     account-number: "${PAYMENT_SOURCE_ACCOUNT_NUMBER:0245253419}"
     currency: "${PAYMENT_SOURCE_CURRENCY:USD}"
     routing-number: "${PAYMENT_SOURCE_ROUTING_NUMBER:028444018}"
+
+otel:
+  service:
+    name: ${spring.application.name}
+  exporter:
+    otlp:
+      endpoint: "http://localhost:4318"
+  traces:
+    sampler:
+      probability: 1.0

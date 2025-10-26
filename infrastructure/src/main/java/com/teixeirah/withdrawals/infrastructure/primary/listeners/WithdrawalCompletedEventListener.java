@@ -1,6 +1,7 @@
 package com.teixeirah.withdrawals.infrastructure.primary.listeners;
 
 import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WithdrawalCompletedEvent;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class WithdrawalCompletedEventListener {
 
     @Async
+    @WithSpan(value = "Received WithdrawalCompletedEvent to send notification")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WithdrawalCompletedEvent.class)
     public void handle(WithdrawalCompletedEvent event) {
         log.atInfo()

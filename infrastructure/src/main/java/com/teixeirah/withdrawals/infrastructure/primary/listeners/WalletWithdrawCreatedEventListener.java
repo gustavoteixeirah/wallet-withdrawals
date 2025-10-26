@@ -3,6 +3,7 @@ package com.teixeirah.withdrawals.infrastructure.primary.listeners;
 import com.teixeirah.withdrawals.application.command.ProcessWalletDebitCommand;
 import com.teixeirah.withdrawals.application.usecase.ProcessWalletDebitUseCase;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletWithdrawCreatedEvent;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -18,6 +19,7 @@ public class WalletWithdrawCreatedEventListener {
     private final ProcessWalletDebitUseCase processWalletDebitInputPort;
 
     @Async
+    @WithSpan(value = "Received WalletWithdrawCreatedEvent to process wallet debit")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WalletWithdrawCreatedEvent.class)
     public void handle(WalletWithdrawCreatedEvent event) {
         log.atInfo()

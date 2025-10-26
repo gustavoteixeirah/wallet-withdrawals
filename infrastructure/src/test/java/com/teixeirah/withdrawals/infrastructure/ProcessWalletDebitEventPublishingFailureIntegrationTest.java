@@ -4,9 +4,6 @@ import com.teixeirah.withdrawals.application.command.ProcessWalletDebitCommand;
 import com.teixeirah.withdrawals.application.usecase.ProcessWalletDebitUseCase;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
-import com.teixeirah.withdrawals.domain.wallet.service.exceptions.InsufficientFundsException;
-import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
-import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletServiceException;
 import io.restassured.RestAssured;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,12 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -32,17 +25,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.jooq.generated.wallet_withdrawals.Tables.WALLET_WITHDRAWALS_;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(ProcessWalletDebitEventPublishingFailureIntegrationTest.Config.class)
 class ProcessWalletDebitEventPublishingFailureIntegrationTest {
 
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @MockBean
+    private DomainEventPublisherPort domainEventPublisher;
+
+    @MockBean
+    private WalletServicePort walletServicePort;
 
     @Autowired
     @Qualifier("writeDsl")
@@ -54,27 +53,6 @@ class ProcessWalletDebitEventPublishingFailureIntegrationTest {
     @LocalServerPort
     int port;
 
-    // This nested class provides the mock beans
-    @TestConfiguration
-    static class Config {
-
-        @Bean
-        @Primary
-        public DomainEventPublisherPort failingDomainEventPublisher() {
-            return events -> {
-                throw new RuntimeException("Simulated event publishing failure");
-            };
-        }
-
-        @Bean
-        @Primary
-        public WalletServicePort mockWalletServicePort() throws InsufficientFundsException, WalletNotFoundException, WalletServiceException {
-            // Mock the wallet service to return a successful debit
-            WalletServicePort mock = mock(WalletServicePort.class);
-            when(mock.debit(any(), any(), any())).thenReturn(12345L);
-            return mock;
-        }
-    }
 
     @BeforeEach
     void setup() {
@@ -86,23 +64,23 @@ class ProcessWalletDebitEventPublishingFailureIntegrationTest {
     }
 
     @Test
-    void shouldRollbackDebitWhenEventPublishingFails() {
+    void shouldRollbackDebitWhenEventPublishingFails() throws Exception {
         // --- Arrange ---
-        // Manually insert a WalletWithdraw in the 'CREATED' state
         UUID withdrawalId = UUID.randomUUID();
         insertWalletWithdraw(withdrawalId, "CREATED");
-
         ProcessWalletDebitCommand command = new ProcessWalletDebitCommand(withdrawalId);
 
+        // --- MOVE MOCK LOGIC HERE ---
+        when(walletServicePort.debit(any(), any(), any())).thenReturn(12345L);
+        doThrow(new RuntimeException("Simulated event publishing failure"))
+                .when(domainEventPublisher).publish(any());
+
         // --- Act & Assert (Action) ---
-        // Execute the use case directly and assert that it throws the simulated exception
         assertThrows(RuntimeException.class, () -> {
             processWalletDebitUseCase.execute(command);
         }, "Simulated event publishing failure");
 
         // --- Assert (Database) ---
-        // Verify that the transaction was rolled back
-        // The status should still be 'CREATED', not 'WALLET_DEBITED' or 'FAILED'
         String status = dsl.select(WALLET_WITHDRAWALS_.STATUS)
                 .from(WALLET_WITHDRAWALS_)
                 .where(WALLET_WITHDRAWALS_.ID.eq(withdrawalId))

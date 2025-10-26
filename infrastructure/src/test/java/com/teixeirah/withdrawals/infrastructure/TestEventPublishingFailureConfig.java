@@ -11,7 +11,7 @@ import java.util.List;
 @TestConfiguration
 public class TestEventPublishingFailureConfig {
 
-    @Bean
+    @Bean("tracingDomainEventPublisherDecorator")
     @Primary
     public DomainEventPublisherPort failingDomainEventPublisher() {
         return events -> {

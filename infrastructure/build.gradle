@@ -57,6 +57,7 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
 
     // Micrometer Tracing with OpenTelemetry (Otel)
     implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'

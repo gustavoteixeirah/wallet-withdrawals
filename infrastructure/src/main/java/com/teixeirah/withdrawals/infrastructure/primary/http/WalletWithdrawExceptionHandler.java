@@ -14,4 +14,15 @@ public class WalletWithdrawExceptionHandler {
         return ResponseEntity.notFound().build();
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<ErrorResponse> handleNullPointer(NullPointerException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    public record ErrorResponse(String message) {}
 }

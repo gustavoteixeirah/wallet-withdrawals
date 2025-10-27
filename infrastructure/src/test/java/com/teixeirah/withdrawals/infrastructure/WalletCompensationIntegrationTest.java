@@ -84,6 +84,49 @@ class WalletCompensationIntegrationTest {
         verifyWalletRefundCalled(transactionId);
     }
 
+    @Test
+    void shouldReturnBadRequestWhenValidationFails() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                            "userId": 1,
+                            "amount": 100.00,
+                            "recipientFirstName": "Test",
+                            "recipientLastName": "User",
+                            "recipientNationalId": "123",
+                            "recipientAccountNumber": "123456",
+                            "recipientRoutingNumber": ""
+                        }
+                        """)
+                .when()
+                .post("/api/v1/wallet_withdraw")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("Account routing number is required."));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenUserIdIsMissing() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                            "amount": 100.00,
+                            "recipientFirstName": "Test",
+                            "recipientLastName": "User",
+                            "recipientNationalId": "123",
+                            "recipientAccountNumber": "123456",
+                            "recipientRoutingNumber": "789"
+                        }
+                        """)
+                .when()
+                .post("/api/v1/wallet_withdraw")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("User ID cannot be null"));
+    }
+
     private String initiateWithdrawal() {
         return given()
                 .contentType(ContentType.JSON)

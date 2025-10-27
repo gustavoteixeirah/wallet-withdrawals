@@ -59,7 +59,7 @@ class WalletWithdrawTest {
         assertEquals(1, events.size());
         assertInstanceOf(WalletWithdrawCreatedEvent.class, events.get(0));
         WalletWithdrawCreatedEvent event = (WalletWithdrawCreatedEvent) events.get(0);
-        assertEquals(transaction, event.walletWithdraw());
+        assertEquals(transaction.getId(), event.withdrawalId());
     }
 
     @Test

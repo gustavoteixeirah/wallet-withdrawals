@@ -12,4 +12,7 @@ public interface WalletServicePort {
     Long debit(Long userId, BigDecimal amountToDebit, UUID transactionId)
             throws InsufficientFundsException, WalletNotFoundException, WalletServiceException;
 
+    Long topUp(Long userId, BigDecimal amountToTopUp, UUID transactionId)
+            throws WalletNotFoundException, WalletServiceException;
+
 }

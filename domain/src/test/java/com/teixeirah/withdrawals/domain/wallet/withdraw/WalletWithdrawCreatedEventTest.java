@@ -21,7 +21,7 @@ class WalletWithdrawCreatedEventTest {
         WalletWithdrawCreatedEvent event = new WalletWithdrawCreatedEvent(walletWithdraw);
 
         assertNotNull(event);
-        assertEquals(walletWithdraw, event.walletWithdraw());
+        assertEquals(walletWithdraw.getId(), event.withdrawalId());
         assertInstanceOf(DomainEvent.class, event);
     }
 }

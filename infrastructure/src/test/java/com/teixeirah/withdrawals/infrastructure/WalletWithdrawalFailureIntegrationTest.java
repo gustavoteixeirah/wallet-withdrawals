@@ -118,7 +118,7 @@ class WalletWithdrawalFailureIntegrationTest {
 
         String transactionId = initiateWithdrawal();
 
-        awaitStatusAndVerifyReason(transactionId, startsWith("Payment rejected:"));
+        awaitStatusAndVerifyCompensationPendingReason(transactionId, startsWith("Payment rejected:"));
     }
 
     @Test
@@ -138,7 +138,7 @@ class WalletWithdrawalFailureIntegrationTest {
 
         String transactionId = initiateWithdrawal();
 
-        awaitStatusAndVerifyReason(transactionId, "Payment rejected: bank rejected payment");
+        awaitStatusAndVerifyCompensationPendingReason(transactionId, "Payment rejected: bank rejected payment");
     }
 
     @Test
@@ -158,7 +158,7 @@ class WalletWithdrawalFailureIntegrationTest {
 
         String transactionId = initiateWithdrawal();
 
-        awaitStatusAndVerifyReason(transactionId, startsWith("Payment provider error:"));
+        awaitStatusAndVerifyCompensationPendingReason(transactionId, startsWith("Payment provider error:"));
     }
 
     @Test
@@ -231,6 +231,29 @@ class WalletWithdrawalFailureIntegrationTest {
                 .then()
                 .statusCode(200)
                 .body("status", equalTo("FAILED"))
+                .body("failureReason", reasonMatcher);
+    }
+
+    private void awaitStatusAndVerifyCompensationPendingReason(String transactionId, String expectedReason) {
+        awaitStatusAndVerifyCompensationPendingReason(transactionId, equalTo(expectedReason));
+    }
+
+    private void awaitStatusAndVerifyCompensationPendingReason(String transactionId, Matcher<String> reasonMatcher) {
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+                given()
+                        .when()
+                        .get("/api/v1/wallet_withdraw/{id}", transactionId)
+                        .then()
+                        .statusCode(200)
+                        .body("status", equalTo("REFUNDED"))
+        );
+
+        given()
+                .when()
+                .get("/api/v1/wallet_withdraw/{id}", transactionId)
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("REFUNDED"))
                 .body("failureReason", reasonMatcher);
     }
 

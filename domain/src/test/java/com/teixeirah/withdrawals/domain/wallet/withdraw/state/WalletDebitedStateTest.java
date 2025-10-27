@@ -125,8 +125,8 @@ class WalletDebitedStateTest {
 
         // Then
         verify(paymentProviderPort).createPayment(expectedPaymentRequest);
-        verify(walletWithdraw).markAsFailed(any(FailedState.class), eq("Payment rejected: Invalid recipient account"));
-        assertEquals(WalletWithdrawStatus.FAILED, walletWithdraw.getStatus());
+        verify(walletWithdraw).markForCompensation("Payment rejected: Invalid recipient account");
+        assertEquals(WalletWithdrawStatus.COMPENSATION_PENDING, walletWithdraw.getStatus());
     }
 
     @Test
@@ -147,8 +147,8 @@ class WalletDebitedStateTest {
 
         // Then
         verify(paymentProviderPort).createPayment(expectedPaymentRequest);
-        verify(walletWithdraw).markAsFailed(any(FailedState.class), eq("Payment provider error: Payment provider timeout"));
-        assertEquals(WalletWithdrawStatus.FAILED, walletWithdraw.getStatus());
+        verify(walletWithdraw).markForCompensation("Payment provider error: Payment provider timeout");
+        assertEquals(WalletWithdrawStatus.COMPENSATION_PENDING, walletWithdraw.getStatus());
     }
 
     @Test

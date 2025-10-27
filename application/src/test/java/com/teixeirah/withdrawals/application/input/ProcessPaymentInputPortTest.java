@@ -117,8 +117,8 @@ class ProcessPaymentInputPortTest {
         verify(walletWithdrawRepository).save(walletWithdraw);
         verify(eventPublisher).publish(anyList());
 
-        // Verify the aggregate state changed to FAILED
-        assertEquals(WalletWithdrawStatus.FAILED, walletWithdraw.getStatus());
+        // Verify the aggregate state changed to COMPENSATION_PENDING
+        assertEquals(WalletWithdrawStatus.COMPENSATION_PENDING, walletWithdraw.getStatus());
     }
 
     @Test
@@ -148,8 +148,8 @@ class ProcessPaymentInputPortTest {
         verify(walletWithdrawRepository).save(walletWithdraw);
         verify(eventPublisher).publish(anyList());
 
-        // Verify the aggregate state changed to FAILED
-        assertEquals(WalletWithdrawStatus.FAILED, walletWithdraw.getStatus());
+        // Verify the aggregate state changed to COMPENSATION_PENDING
+        assertEquals(WalletWithdrawStatus.COMPENSATION_PENDING, walletWithdraw.getStatus());
     }
 
     @Test

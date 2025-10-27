@@ -23,9 +23,9 @@ public final class WalletDebitedState implements WalletWithdrawState {
             context.changeState(new CompletedState(), WalletWithdrawStatus.COMPLETED);
             context.registerDomainEvent(new WithdrawalCompletedEvent(context));
         } catch (PaymentRejectedException e) {
-            context.markAsFailed(new FailedState(), "Payment rejected: " + e.getMessage());
+            context.markForCompensation("Payment rejected: " + e.getMessage());
         } catch (PaymentProviderException e) {
-            context.markAsFailed(new FailedState(), "Payment provider error: " + e.getMessage());
+            context.markForCompensation("Payment provider error: " + e.getMessage());
         }
     }
 

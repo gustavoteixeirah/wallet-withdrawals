@@ -6,7 +6,12 @@ import com.teixeirah.withdrawals.domain.payments.PaymentSourceProviderPort;
 import com.teixeirah.withdrawals.domain.value.objects.Recipient;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletBalancePort;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
+import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
+import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletServiceException;
+import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletCompensationPendingEvent;
+import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletRefundCompletedEvent;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.events.WalletWithdrawFailedEvent;
+import com.teixeirah.withdrawals.domain.wallet.withdraw.state.CompensationPendingState;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.state.CompletedState;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.state.FailedState;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.state.PendingDebitState;
@@ -62,7 +67,8 @@ public class WalletWithdraw {
             case CREATED -> new PendingDebitState();
             case WALLET_DEBITED -> new WalletDebitedState();
             case COMPLETED -> new CompletedState();
-            case FAILED -> new FailedState();
+            case FAILED, REFUNDED -> new FailedState();
+            case COMPENSATION_PENDING -> new CompensationPendingState();
         };
     }
 
@@ -99,6 +105,27 @@ public class WalletWithdraw {
         changeState(failedState, WalletWithdrawStatus.FAILED);
         this.failureReason = reason;
         registerDomainEvent(new WalletWithdrawFailedEvent(this.getId(), reason));
+    }
+
+    public void markForCompensation(String reason) {
+        changeState(new CompensationPendingState(), WalletWithdrawStatus.COMPENSATION_PENDING);
+        this.failureReason = reason;
+        registerDomainEvent(new WalletCompensationPendingEvent(this.getId(), this.getAmount().add(this.getFee())));
+    }
+
+    public void completeCompensation() {
+        changeState(new FailedState(), WalletWithdrawStatus.REFUNDED);
+        registerDomainEvent(new WalletRefundCompletedEvent(this.getId()));
+    }
+
+    public void attemptCompensation(WalletServicePort walletServicePort) {
+        try {
+            final var refundAmount = this.getAmount().add(this.getFee());
+            walletServicePort.topUp(this.getUserId(), refundAmount, this.getId());
+            this.completeCompensation();
+        } catch (WalletNotFoundException | WalletServiceException e) {
+            this.markAsFailed(new FailedState(), "Compensation failed: " + e.getMessage());
+        }
     }
 
     public UUID getId() {

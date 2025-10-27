@@ -23,14 +23,14 @@ public class WalletWithdrawCreatedEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, classes = WalletWithdrawCreatedEvent.class)
     public void handle(WalletWithdrawCreatedEvent event) {
         log.atInfo()
-           .addKeyValue("withdrawalId", event.walletWithdraw().getId())
+           .addKeyValue("withdrawalId", event.withdrawalId())
            .log("wallet_withdraw_created_event_received");
 
-        ProcessWalletDebitCommand command = new ProcessWalletDebitCommand(event.walletWithdraw().getId());
+        ProcessWalletDebitCommand command = new ProcessWalletDebitCommand(event.withdrawalId());
         processWalletDebitInputPort.execute(command);
 
         log.atInfo()
-           .addKeyValue("withdrawalId", event.walletWithdraw().getId())
+           .addKeyValue("withdrawalId", event.withdrawalId())
            .log("wallet_debit_initiated");
     }
 }

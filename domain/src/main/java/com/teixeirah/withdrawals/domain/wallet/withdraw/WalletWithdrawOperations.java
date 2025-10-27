@@ -21,7 +21,7 @@ public class WalletWithdrawOperations {
 
         final var id = UUID.randomUUID();
         final var walletWithdraw = new WalletWithdraw(id, userId, amount, recipient);
-        walletWithdraw.registerDomainEvent(new WalletWithdrawCreatedEvent(walletWithdraw));
+        walletWithdraw.registerDomainEvent(new WalletWithdrawCreatedEvent(id));
         return walletWithdraw;
     }
 }

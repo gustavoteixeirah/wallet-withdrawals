@@ -4,5 +4,7 @@ public enum WalletWithdrawStatus {
     CREATED,
     WALLET_DEBITED,
     COMPLETED,
-    FAILED
+    FAILED,
+    COMPENSATION_PENDING,
+    REFUNDED
 }

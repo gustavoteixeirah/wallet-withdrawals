@@ -6,7 +6,7 @@ import com.teixeirah.withdrawals.domain.wallet.service.WalletBalancePort;
 import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.withdraw.WalletWithdraw;
 
-public sealed interface WalletWithdrawState permits PendingDebitState, WalletDebitedState, CompletedState, FailedState {
+public sealed interface WalletWithdrawState permits PendingDebitState, WalletDebitedState, CompletedState, FailedState, CompensationPendingState {
 
     default void processDebit(WalletWithdraw context, WalletBalancePort balancePort, WalletServicePort walletServicePort) {
         throw new IllegalStateException("Cannot process debit in state " + this.getClass().getSimpleName());

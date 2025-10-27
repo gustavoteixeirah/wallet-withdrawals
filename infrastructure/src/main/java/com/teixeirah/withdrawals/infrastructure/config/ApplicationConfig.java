@@ -2,10 +2,12 @@ package com.teixeirah.withdrawals.infrastructure.config;
 
 import com.teixeirah.withdrawals.application.input.GetWalletWithdrawInputPort;
 import com.teixeirah.withdrawals.application.input.InitiateWalletWithdrawInputPort;
+import com.teixeirah.withdrawals.application.input.ProcessCompensationInputPort;
 import com.teixeirah.withdrawals.application.input.ProcessPaymentInputPort;
 import com.teixeirah.withdrawals.application.input.ProcessWalletDebitInputPort;
 import com.teixeirah.withdrawals.application.usecase.GetWalletWithdrawUseCase;
 import com.teixeirah.withdrawals.application.usecase.InitiateWalletWithdrawalUseCase;
+import com.teixeirah.withdrawals.application.usecase.ProcessCompensationUseCase;
 import com.teixeirah.withdrawals.application.usecase.ProcessPaymentUseCase;
 import com.teixeirah.withdrawals.application.usecase.ProcessWalletDebitUseCase;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
@@ -53,5 +55,14 @@ public class ApplicationConfig {
             DomainEventPublisherPort eventPublisher) {
 
         return new ProcessPaymentInputPort(walletWithdrawRepository, paymentProviderPort, paymentSourceProviderPort, eventPublisher);
+    }
+
+    @Bean
+    public ProcessCompensationUseCase processCompensationInputPort(
+            WalletWithdrawRepository walletWithdrawRepository,
+            WalletServicePort walletServicePort,
+            DomainEventPublisherPort eventPublisher) {
+
+        return new ProcessCompensationInputPort(walletWithdrawRepository, walletServicePort, eventPublisher);
     }
 }

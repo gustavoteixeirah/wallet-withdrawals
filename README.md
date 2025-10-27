@@ -22,35 +22,62 @@ application/     → use cases and input ports
 infrastructure/  → REST API, database, Spring configuration
 ```
 
+![alt text](docs/images/overall_structure.png)
+
+
 **Design choices**
 - Hexagonal architecture to keep business logic independent from frameworks.
 - jOOQ for type-safe SQL generation based on migration scripts.
 - Domain events for internal communication.
 - Transactional event publishing to keep database and event states consistent.
 
+
 ---
 
 ## Architecture
 
-- See the diagrams in `docs/architecture.md` (Mermaid):
-  - Context diagram (external systems and consumers)
-  - Container diagram (service boundaries and modules)
-  - Component diagram (adapters, use cases, domain components)
-- For details on the distributed tracing implementation, see `docs/tracing_solution.md`.
-- The document also lists the runtime environment variables used for external URLs and payment source configuration.
+![alt text](docs/images/abstract_flow.png)
 
-### Pre-debit balance validation
+The wallet withdrawal system implements a saga pattern to handle the complex process of withdrawing money from a user's wallet through an external payment provider. The system ensures atomicity and provides compensation mechanisms for failed operations, distinguishing between pre-debit failures and post-debit failures that require refunds.
 
-- Before attempting a wallet debit, the domain now queries the current wallet balance via a dedicated read-only port.
-- A withdrawal fails immediately with reason "Insufficient funds" if the available balance is lower than the total to debit, where:
-  - total to debit = requested amount + 10% fee
-- This validation happens in the domain (PendingDebitState) and prevents unnecessary calls to the wallet debit endpoint when balance is insufficient.
+### Summary
 
-Configuration for the balance adapter:
+- You Start the Withdrawal: You request to withdraw a specific amount and say where it should go.
 
-- Property: `adapters.wallet-balance.base-url`
-- Default: `http://mockoon.tools.getontop.com:3000/wallets/balance`
-- Environment variable override: `WALLET_BALANCE_URL`
+- The System Checks Your Wallet: It adds a service fee to your amount and checks your wallet for the total (withdrawal + fee).
+
+  - If funds are low: The withdrawal is immediately marked as "Failed" and nothing else happens.
+
+  - If funds are OK: The system takes the full total (your withdrawal + the fee) from your wallet.
+
+- The System Makes the Payment: It tells an external payment provider to send your original withdrawal amount (without the fee) to your recipient.
+
+  - If the payment succeeds: The provider confirms it, and your withdrawal is marked "Completed."
+
+  - If the payment fails: The system automatically tries to put the entire amount (your withdrawal + the fee) back into your wallet. If this refund works, it's marked "Refunded." If the refund fails, it's flagged for a human to review and fix manually.
+
+### Registering the wallet withdraw intention
+
+![alt text](docs/images/registering_wallet_withdraw_intention.png)
+
+
+### Executing the user’s wallet withdraw
+
+![alt text](docs/images/executing_withdraw.png)
+
+
+### Paying the recipient
+
+![alt text](docs/images/paying_recipient.png)
+
+---
+
+### More docs
+
+- Database design: [link](docs/database.md)
+- Solution for Accounts Management: [link](docs/account_management.md)
+- Solution for Transaction History: [link](docs/transaction_history.md)
+- Tracing: [link](docs/tracing_solution.md)
 
 ---
 

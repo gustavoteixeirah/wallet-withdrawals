@@ -79,6 +79,8 @@ The wallet withdrawal system implements a saga pattern to handle the complex pro
 - Solution for Transaction History: [link](docs/transaction_history.md)
 - Tracing: [link](docs/tracing_solution.md)
 
+- Google Slides presentation: https://docs.google.com/presentation/d/1Mk85nPIW0ruioxGMLseAzfEBmL7KUcatulD76vtX1EA/edit?usp=sharing
+- Presentation video soon!
 ---
 
 ## How to run locally

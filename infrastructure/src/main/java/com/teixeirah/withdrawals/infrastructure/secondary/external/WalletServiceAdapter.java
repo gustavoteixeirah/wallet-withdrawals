@@ -4,6 +4,7 @@ import com.teixeirah.withdrawals.domain.wallet.service.WalletServicePort;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.InsufficientFundsException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletNotFoundException;
 import com.teixeirah.withdrawals.domain.wallet.service.exceptions.WalletServiceException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.instrumentation.annotations.SpanAttribute;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import org.slf4j.Logger;
@@ -33,6 +34,9 @@ public class WalletServiceAdapter implements WalletServicePort {
     }
 
     private record WalletTransactionResponse(long wallet_transaction_id, BigDecimal amount, long user_id) {
+    }
+
+    private record WalletErrorResponse(String code, String message) {
     }
 
     public WalletServiceAdapter(
@@ -98,7 +102,8 @@ public class WalletServiceAdapter implements WalletServicePort {
                     .addKeyValue("responseBody", e.getResponseBodyAsString())
                     .setCause(e)
                     .log("wallet_service_5xx_error");
-            throw new WalletServiceException("Server error from wallet service: " + e.getMessage());
+            String errorMessage = extractErrorMessage(e.getResponseBodyAsString());
+            throw new WalletServiceException("Wallet service error: " + errorMessage);
         } catch (Exception e) {
             log.atError()
                     .addKeyValue("errorMessage", e.getMessage())
@@ -160,7 +165,8 @@ public class WalletServiceAdapter implements WalletServicePort {
                     .addKeyValue("responseBody", e.getResponseBodyAsString())
                     .setCause(e)
                     .log("wallet_service_5xx_error");
-            throw new WalletServiceException("Server error from wallet service: " + e.getMessage());
+            String errorMessage = extractErrorMessage(e.getResponseBodyAsString());
+            throw new WalletServiceException("Wallet service error: " + errorMessage);
         } catch (Exception e) {
             log.atError()
                     .addKeyValue("errorMessage", e.getMessage())
@@ -168,4 +174,30 @@ public class WalletServiceAdapter implements WalletServicePort {
                     .log("wallet_service_topup_unexpected_error");
             throw new WalletServiceException("Unexpected error communicating with wallet service: " + e.getMessage());
         }
-    }}
+    }
+
+    private String extractErrorMessage(String responseBody) {
+        if (responseBody == null || responseBody.trim().isEmpty()) {
+            return "Unknown server error";
+        }
+
+        try {
+            final var objectMapper = new ObjectMapper();
+            WalletErrorResponse errorResponse = objectMapper.readValue(responseBody, WalletErrorResponse.class);
+
+            if (errorResponse != null && errorResponse.message() != null && !errorResponse.message().trim().isEmpty()) {
+                return errorResponse.message();
+            }
+
+            if (errorResponse != null && errorResponse.code() != null && !errorResponse.code().trim().isEmpty()) {
+                return errorResponse.code();
+            }
+
+            return "Server error";
+
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            // If we can't parse the JSON, return a generic message
+            return "Server error";
+        }
+    }
+}

@@ -2,6 +2,8 @@ package com.teixeirah.withdrawals.infrastructure.secondary.messaging;
 
 import com.teixeirah.withdrawals.domain.events.DomainEvent;
 import com.teixeirah.withdrawals.domain.events.DomainEventPublisherPort;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -19,7 +21,8 @@ class DomainEventPublisherAdapter implements DomainEventPublisherPort {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
-    public void publish(List<DomainEvent> events) {
+    @WithSpan(value = "Publishing domain events after transaction commit")
+    public void publish(@SpanAttribute("events") List<DomainEvent> events) {
         log.atInfo()
            .addKeyValue("eventsCount", events.size())
            .log("publishing_domain_events_registered_after_commit");

@@ -162,7 +162,7 @@ class WalletCompensationIntegrationTest {
                         .then()
                         .statusCode(200)
                         .body("status", equalTo("FAILED"))
-                        .body("failureReason", matchesPattern("Compensation failed: Server error from wallet service: 500 Server Error on POST request for \"http://localhost:\\d+/wallets/transactions\": \\[no body\\]"))
+                        .body("failureReason", equalTo("Compensation failed: Wallet service error: Unknown server error"))
         );
     }
 

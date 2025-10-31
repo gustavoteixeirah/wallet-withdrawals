@@ -23,7 +23,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Component
-public class WalletServiceAdapter implements WalletServicePort {
+class WalletServiceAdapter implements WalletServicePort {
 
     private static final Logger log = LoggerFactory.getLogger(WalletServiceAdapter.class);
 

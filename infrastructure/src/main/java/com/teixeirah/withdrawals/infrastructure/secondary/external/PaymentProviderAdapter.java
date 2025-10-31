@@ -36,7 +36,7 @@ class PaymentProviderAdapter implements PaymentProviderPort {
     }
 
     public PaymentProviderAdapter(
-            @Qualifier("paymentProviderRestTemplate") RestTemplate restTemplate, // <-- ADD QUALIFIER
+            @Qualifier("paymentProviderRestTemplate") RestTemplate restTemplate,
             @Value("${adapters.payment-provider.base-url}") String baseUrl
     ) {
         this.restTemplate = restTemplate;

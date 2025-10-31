@@ -18,7 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.math.BigDecimal;
 
 @Component
-public class WalletBalanceAdapter implements WalletBalancePort {
+class WalletBalanceAdapter implements WalletBalancePort {
 
     private static final Logger log = LoggerFactory.getLogger(WalletBalanceAdapter.class);
 
@@ -30,7 +30,7 @@ public class WalletBalanceAdapter implements WalletBalancePort {
 
     public WalletBalanceAdapter(
             @Qualifier("walletBalanceRestTemplate") RestTemplate restTemplate,
-            @Value("${adapters.wallet-balance.base-url:http://mockoon.tools.getontop.com:3000/wallets/balance}") String balanceBaseUrl
+            @Value("${adapters.wallet-balance.base-url}") String balanceBaseUrl
     ) {
         this.restTemplate = restTemplate;
         this.balanceBaseUrl = balanceBaseUrl;

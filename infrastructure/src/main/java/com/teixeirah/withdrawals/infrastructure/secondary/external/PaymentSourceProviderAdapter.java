@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class PaymentSourceProviderAdapter implements PaymentSourceProviderPort {
+class PaymentSourceProviderAdapter implements PaymentSourceProviderPort {
 
     private final PaymentSourceProperties paymentSourceProperties;
 
